@@ -43,7 +43,7 @@ import { TEST_ERROR_MESSAGES } from './constants.js';
 
 const proofsEnabled = false;
 
-describe('Fungible Token - ApproveBase Tests', () => {
+describe('New Token Standard ApproveBase Tests', () => {
   let tokenAdmin: Mina.TestPublicKey, tokenA: Mina.TestPublicKey;
 
   let fee: number,
@@ -234,8 +234,8 @@ describe('Fungible Token - ApproveBase Tests', () => {
     }
   }
 
-  describe('Contract Deployment and Initialization', () => {
-    it('should deploy token contract successfully', async () => {
+  describe('Deploy & initialize', () => {
+    it('should deploy tokenA contract', async () => {
       const tx = await Mina.transaction({ sender: deployer, fee }, async () => {
         AccountUpdate.fundNewAccount(deployer);
 
@@ -251,7 +251,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       await tx.send();
     });
 
-    it('should initialize token contract successfully', async () => {
+    it('should initialize tokenA contract', async () => {
       const tx = await Mina.transaction({ sender: deployer, fee }, async () => {
         AccountUpdate.fundNewAccount(deployer);
         await tokenContract.initialize(
@@ -297,7 +297,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
   });
 
   // SLV = Side-Loaded Verification
-  describe('Account Update Approval Operations - Sideload Disabled', () => {
+  describe('ApproveBase: SLV disabled', () => {
     it('should do a transfer from user2 to user3', async () => {
       const transferAmount = UInt64.from(100);
       const senderBalanceBefore = await tokenContract.getBalanceOf(user2);
@@ -392,7 +392,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
       updateReceive;
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -406,10 +406,8 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.flashMinting
       );
     });
@@ -428,7 +426,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount).mul(2);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(deployer, async () => {
+        await Mina.transaction(deployer, async () => {
           await tokenContract.approveAccountUpdatesCustomWithProof(
             [updateSend, updateReceive],
             dummyProof,
@@ -436,16 +434,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             vKeyMap
           );
         });
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.flashMinting
       );
     });
 
-    it('should reject transactions with mismatched tokens', async () => {
+    it('rejects transactions with mismatched tokens', async () => {
       const sendAmount = UInt64.from(10);
       const updateSend = AccountUpdate.createSigned(
         user2,
@@ -456,7 +452,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -471,16 +467,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.unbalancedTransaction
       );
     });
 
-    it('should reject manually constructed transfers from the account that\'s tracking circulation', async () => {
+    it("Should reject manually constructed transfers from the account that's tracking circulation", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -495,7 +489,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -509,16 +503,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.noTransferFromCirculation
       );
     });
 
-    it('should reject manually constructed transfers to the account that\'s tracking circulation', async () => {
+    it("Should reject manually constructed transfers to the account that's tracking circulation", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -533,7 +525,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -547,16 +539,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.noTransferFromCirculation
       );
     });
 
-    it('should do a transaction constructed manually using sideload-disabled method', async () => {
+    it('should do a transaction constructed manually with approveSideloadDisabled', async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -571,7 +561,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -583,16 +573,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             ]);
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.noTransferFromCirculation
       );
     });
 
-    it('should reject flash-minting transactions using sideload-disabled method', async () => {
+    it('should reject flash-minting transactions with approveSideloadDisabled', async () => {
       const sendAmount = UInt64.from(50);
       const updateSend = AccountUpdate.createSigned(
         user2,
@@ -606,7 +594,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
       updateReceive;
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -618,15 +606,13 @@ describe('Fungible Token - ApproveBase Tests', () => {
             ]);
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.flashMinting
       );
     });
 
-    it('should reject unbalanced transactions using sideload-disabled method', async () => {
+    it('should reject unbalanced transactions with approveSideloadDisabled', async () => {
       const sendAmount = UInt64.from(1);
       const updateSend = AccountUpdate.createSigned(
         user2,
@@ -640,22 +626,20 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount).mul(2);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(deployer, async () => {
+        await Mina.transaction(deployer, async () => {
           await tokenContract.approveAccountUpdatesCustom([
             updateSend,
             updateReceive,
           ]);
         });
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.flashMinting
       );
     });
 
-    it('should reject transactions with mismatched tokens using sideload-disabled method', async () => {
+    it('rejects transactions with mismatched tokens with approveSideloadDisabled', async () => {
       const sendAmount = UInt64.from(10);
       const updateSend = AccountUpdate.createSigned(
         user2,
@@ -666,7 +650,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -679,16 +663,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             ]);
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.unbalancedTransaction
       );
     });
 
-    it('should reject manually constructed transfers from the account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("Should reject manually constructed transfers from the account that's tracking circulation with approveSideloadDisabled", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -703,7 +685,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -715,16 +697,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
             ]);
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.noTransferFromCirculation
       );
     });
 
-    it('should reject manually constructed transfers to the account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("Should reject manually constructed transfers to the account that's tracking circulation with approveSideloadDisabled", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -739,7 +719,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
 
       const approveAccountUpdatesTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: deployer,
             fee,
@@ -751,18 +731,16 @@ describe('Fungible Token - ApproveBase Tests', () => {
             ]);
           }
         );
-        await tx.prove();
-        await tx.sign([deployer.key]).send().wait();
       };
 
-      await expect(approveAccountUpdatesTx).rejects.toThrowError(
+      expect(approveAccountUpdatesTx).rejects.toThrowError(
         FungibleTokenErrors.noTransferFromCirculation
       );
     });
   });
 
-  describe('Account Permissions', () => {
-    it('should reject a transaction that\'s changing the account permission for receive', async () => {
+  describe('account permissions', () => {
+    it("should reject a transaction that's changing the account permission for receive", async () => {
       const permissions = Mina.getAccount(
         user2,
         tokenContract.deriveTokenId()
@@ -775,7 +753,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateSend.account.permissions.set(permissions);
 
       const approveBaseTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: user2,
             fee,
@@ -789,15 +767,13 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([user2.key]).send().wait();
       };
 
-      await expect(approveBaseTx).rejects.toThrowError(
+      expect(approveBaseTx).rejects.toThrowError(
         FungibleTokenErrors.noPermissionChangeAllowed
       );
     });
-    it('should reject a transaction that\'s changing the account permission for receive with approveBaseSideloadDisabled', async () => {
+    it("should reject a transaction that's changing the account permission for receive with approveBaseSideloadDisabled", async () => {
       const permissions = Mina.getAccount(
         user2,
         tokenContract.deriveTokenId()
@@ -810,7 +786,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       updateSend.account.permissions.set(permissions);
 
       const approveBaseTx = async () => {
-        const tx = await Mina.transaction(
+        await Mina.transaction(
           {
             sender: user2,
             fee,
@@ -821,18 +797,16 @@ describe('Fungible Token - ApproveBase Tests', () => {
             );
           }
         );
-        await tx.prove();
-        await tx.sign([user2.key]).send().wait();
       };
 
-      await expect(approveBaseTx).rejects.toThrowError(
+      expect(approveBaseTx).rejects.toThrowError(
         FungibleTokenErrors.noPermissionChangeAllowed
       );
     });
   });
 
-  describe('Updates Dynamic Proof Config Updates', () => {
-    it('should reject updatesDynamicProofConfig update when unauthorized by admin', async () => {
+  describe('Update Updates Dynamic Proof Config', () => {
+    it('should reject updatesDynamicProofConfig update when unauthorized by the admin', async () => {
       try {
         let updatesDynamicProofConfig = UpdatesDynamicProofConfig.default;
         updatesDynamicProofConfig.shouldVerify = Bool(true);
@@ -849,12 +823,13 @@ describe('Fungible Token - ApproveBase Tests', () => {
         await updateUpdatesDynamicProofConfigTx.prove();
         await updateUpdatesDynamicProofConfigTx.sign([user2.key]).send().wait();
       } catch (error: unknown) {
-        const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+        const expectedErrorMessage =
+          'the required authorization was not provided or is invalid';
         expect((error as Error).message).toContain(expectedErrorMessage);
       }
     });
 
-    it('should update updates dynamic proof config: enable side-loaded verification', async () => {
+    it('update updates dynamic proof config: enable side-loaded verification', async () => {
       let updatesDynamicProofConfig = UpdatesDynamicProofConfig.default;
       updatesDynamicProofConfig.shouldVerify = Bool(true);
 
@@ -875,9 +850,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
     });
   });
 
-  describe('Side-loaded Verification Key Updates', () => {
-    it('should reject updating sideloaded verification key hash: unauthorized by admin', async () => {
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+  describe('Update Side-loaded vKey Hash', () => {
+    it('should reject updating side-loaded vKey hash: unauthorized by the admin', async () => {
+      const expectedErrorMessage =
+        'the required authorization was not provided or is invalid.';
       await updateSLVkeyHashTx(
         user1,
         programVkey,
@@ -888,7 +864,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject updating sideloaded verification key hash: invalid operationKey', async () => {
+    it('should reject updating side-loaded vKey hash: invalid operationKey', async () => {
       const expectedErrorMessage = FungibleTokenErrors.invalidOperationKey;
       await updateSLVkeyHashTx(
         user1,
@@ -900,7 +876,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject updating sideloaded verification key hash: non-compliant vKeyMap', async () => {
+    it('should reject updating side-loaded vKey hash: non-compliant vKeyMap', async () => {
       let tamperedVKeyMap = vKeyMap.clone();
       tamperedVKeyMap.insert(14n, Field.random());
 
@@ -929,7 +905,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should update the sideloaded verification key hash for updates', async () => {
+    it('should update the side-loaded vKey hash for updates', async () => {
       await updateSLVkeyHashTx(
         user1,
         programVkey,
@@ -942,8 +918,8 @@ describe('Fungible Token - ApproveBase Tests', () => {
     });
   });
 
-  describe('Side-loaded Approval Operations', () => {
-    it('should reject approveBase with non-compliant vKeyMap', async () => {
+  describe('ApproveBase: SLV enabled', () => {
+    it('should reject approveBase given a non-compliant vKeyMap', async () => {
       let tamperedVKeyMap = vKeyMap.clone();
       tamperedVKeyMap.insert(8n, Field.random());
 
@@ -971,7 +947,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject approveBase with non-compliant vKey hash', async () => {
+    it('should reject approveBase given a non-compliant vKey hash', async () => {
       const expectedErrorMessage = FungibleTokenErrors.invalidSideLoadedVKey;
       await testApproveBaseSLTx(
         user2,
@@ -986,7 +962,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
 
     //! only passes when `proofsEnabled=true`
     (!proofsEnabled ? test.skip : it)(
-      'should reject approveBase with invalid proof',
+      'should reject approveBase given an invalid proof',
       async () => {
         await program2.compile();
         const invalidProof = await generateDynamicProof2(
@@ -1007,7 +983,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       }
     );
 
-    it('should approve updates with valid proof', async () => {
+    it('should approve updates given a valid proof', async () => {
       const dynamicProof = await generateDynamicProof(
         tokenContract.deriveTokenId(),
         user2
@@ -1023,7 +999,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should update the sideloaded verification key hash for updates to pause the method', async () => {
+    it('should update the side-loaded vKey hash for updates to pause the method', async () => {
       await updateSLVkeyHashTx(
         user1,
         pausedVkey,
