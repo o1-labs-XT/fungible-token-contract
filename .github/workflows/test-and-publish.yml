@@ -1,0 +1,60 @@
+#
+# This workflow will run unit tests and attempt to publish package to NPM.
+#
+
+name: Test and publish to NPM
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}
+jobs:
+  common-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node: [18]
+    steps:
+      - name: Set up NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: NPM ci, build, & test
+        run: |
+          npm ci
+          npm run build --if-present
+          npm run test
+        env:
+          CI: true
+   
+
+  publish-to-npm:
+    needs:
+      [
+       common-unit-tests,
+      ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20]
+    steps:
+      - name: Set up NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: NPM ci & build
+        run: |
+          npm ci
+          npm run build --if-present
+      - name: Publish to NPM if version has changed
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          strategy: upgrade
+        env:
+          INPUT_TOKEN: ${{ secrets.NPM_TOKEN }}
