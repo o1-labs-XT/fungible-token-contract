@@ -389,7 +389,7 @@ class FungibleToken extends TokenContract {
     amount: UInt64
   ): Promise<AccountUpdate> {
     const accountUpdate = this.internal.mint({ address: recipient, amount });
-    accountUpdate.body.useFullCommitment;
+    accountUpdate.body.useFullCommitment = Bool(true);
 
     const packedMintParams = this.packedMintParams.getAndRequireEquals();
     const mintParams = MintParams.unpack(packedMintParams);
@@ -472,6 +472,7 @@ class FungibleToken extends TokenContract {
    */
   async #internalBurn(from: PublicKey, amount: UInt64): Promise<AccountUpdate> {
     const accountUpdate = this.internal.burn({ address: from, amount });
+    accountUpdate.body.useFullCommitment = Bool(true);
 
     const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
     const burnParams = BurnParams.unpack(packedBurnParams);
@@ -558,7 +559,8 @@ class FungibleToken extends TokenContract {
     to.equals(this.address).assertFalse(
       FungibleTokenErrors.noTransferFromCirculation
     );
-    this.internal.send({ from, to, amount });
+    const accountUpdate = this.internal.send({ from, to, amount });
+    accountUpdate.body.useFullCommitment = Bool(true);
 
     this.emitEvent('Transfer', new TransferEvent({ from, to, amount }));
   }
@@ -696,6 +698,11 @@ class FungibleToken extends TokenContract {
     this.forEachUpdate(updates, (update, usesToken) => {
       // Make sure that the account permissions are not changed
       this.checkPermissionsUpdate(update);
+      update.body.useFullCommitment = Provable.if(
+        usesToken,
+        Bool(true),
+        update.body.useFullCommitment
+      );
       this.emitEventIf(
         usesToken,
         'BalanceChange',

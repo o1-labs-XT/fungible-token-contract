@@ -11,15 +11,15 @@ export {
   OperationKeys,
 } from './configs.js';
 
-export {
-  FungibleTokenErrors,
-  FungibleToken,
-  SetAdminEvent,
-  MintEvent,
-  BurnEvent,
-  BalanceChangeEvent,
-  SideLoadedVKeyUpdateEvent,
-  VKeyMerkleMap,
+export { 
+    FungibleTokenErrors,
+    FungibleToken,
+    SetAdminEvent,
+    MintEvent,
+    BurnEvent,
+    BalanceChangeEvent,
+    SideLoadedVKeyUpdateEvent,
+    VKeyMerkleMap,
 } from './FungibleTokenContract.js';
 
 export {
