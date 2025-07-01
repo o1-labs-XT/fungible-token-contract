@@ -443,12 +443,7 @@ describe('Fungible Token - Burn Tests', () => {
       expect(configs[2]).toBeInstanceOf(Field);
       expect(configs[3]).toBeInstanceOf(Field);
 
-      const [
-        packedAmountConfigs,
-        packedMintParams,
-        packedBurnParams,
-        packedDynamicProofConfigs,
-      ] = configs;
+      const [packedAmountConfigs, packedMintParams, packedBurnParams] = configs;
 
       const mintConfig = MintConfig.unpack(packedAmountConfigs);
       const burnConfig = BurnConfig.unpack(packedAmountConfigs);
@@ -706,7 +701,6 @@ describe('Fungible Token - Burn Tests', () => {
     it('should update burn ranged amount config via field-specific function', async () => {
       const packedConfigsBefore = tokenContract.packedAmountConfigs.get();
       const burnConfigBefore = BurnConfig.unpack(packedConfigsBefore);
-      const originalFixedAmount = burnConfigBefore.fixedAmount;
       const originalUnauthorized = burnConfigBefore.unauthorized;
       const newRangedAmountValue = Bool(false);
       await updateBurnConfigPropertyTx(
