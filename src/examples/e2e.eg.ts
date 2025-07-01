@@ -1,10 +1,5 @@
 import { AccountUpdate, Mina, PrivateKey, UInt8, UInt64, Bool } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
-import { VerificationKey } from 'o1js';
-import {
-  generateDummyDynamicProof,
-  SideloadedProof,
-} from '../side-loaded/program.eg.js';
+import { FungibleToken } from '../FungibleTokenContract.js';
 import {
   MintConfig,
   MintParams,

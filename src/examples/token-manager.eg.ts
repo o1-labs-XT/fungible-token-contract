@@ -1,5 +1,4 @@
 import {
-  Field,
   ZkProgram,
   Struct,
   Bool,
@@ -21,11 +20,7 @@ import {
   PrivateKey,
   UInt8,
 } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
-import {
-  generateDummyDynamicProof,
-  SideloadedProof,
-} from '../side-loaded/program.eg.js';
+import { FungibleToken } from '../FungibleTokenContract.js';
 import {
   BurnConfig,
   BurnDynamicProofConfig,

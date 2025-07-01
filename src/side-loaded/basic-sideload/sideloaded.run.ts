@@ -15,7 +15,6 @@ import {
   CounterProgram,
   generateEcdsaProof,
   generateKeccakProof,
-  generateCounterProof,
 } from './sideloaded-zkprograms.js';
 
 import { SideloadedProofVerifierZkApp } from './verifier-zkapp.js';
@@ -38,25 +37,43 @@ const fee = 1e8;
 
 // Setup test accounts
 const [deployer, zkAppPrivateKey, alice] = localChain.testAccounts;
-const zkApp = new SideloadedProofVerifierZkApp(zkAppPrivateKey.key.toPublicKey());
+const zkApp = new SideloadedProofVerifierZkApp(
+  zkAppPrivateKey.key.toPublicKey()
+);
 
 // ---------------------------- Compile Programs ----------------------------
 console.log('Compiling ZkPrograms and generating verification keys...');
 const ecdsaVerificationKey = (await EcdsaProgram.compile()).verificationKey;
 const keccakVerificationKey = (await KeccakProgram.compile()).verificationKey;
 const counterVerificationKey = (await CounterProgram.compile()).verificationKey;
-const verifierContractKey = (await SideloadedProofVerifierZkApp.compile()).verificationKey;
+const verifierContractKey = (await SideloadedProofVerifierZkApp.compile())
+  .verificationKey;
 
 // Log verification key hashes for reference
-console.log('ECDSA verification key hash:', ecdsaVerificationKey.hash.toBigInt());
-console.log('Keccak verification key hash:', keccakVerificationKey.hash.toBigInt());
-console.log('Counter verification key hash:', counterVerificationKey.hash.toBigInt());
-console.log('SideloadedProofVerifierZkApp verification key hash:', verifierContractKey.hash.toBigInt());
+console.log(
+  'ECDSA verification key hash:',
+  ecdsaVerificationKey.hash.toBigInt()
+);
+console.log(
+  'Keccak verification key hash:',
+  keccakVerificationKey.hash.toBigInt()
+);
+console.log(
+  'Counter verification key hash:',
+  counterVerificationKey.hash.toBigInt()
+);
+console.log(
+  'SideloadedProofVerifierZkApp verification key hash:',
+  verifierContractKey.hash.toBigInt()
+);
 
 // Log addresses for reference
 console.log('Deployer Address:', deployer.toBase58());
 console.log('Deployer Address as Field:', deployer.toFields()[0].toBigInt());
-console.log('SideloadedProofVerifierZkApp Address:', zkAppPrivateKey.key.toPublicKey().toBase58());
+console.log(
+  'SideloadedProofVerifierZkApp Address:',
+  zkAppPrivateKey.key.toPublicKey().toBase58()
+);
 console.log(
   'SideloadedProofVerifierZkApp Address as Field:',
   zkAppPrivateKey.key.toPublicKey().toFields()[0].toBigInt()
@@ -138,11 +155,18 @@ const updateTx = await Mina.transaction({ sender: deployer, fee }, async () => {
   );
 });
 await updateTx.prove();
-const updateTxResult = await updateTx.sign([deployer.key]).send().then((v) => v.wait());
+const updateTxResult = await updateTx
+  .sign([deployer.key])
+  .send()
+  .then((v) => v.wait());
 equal(updateTxResult.status, 'included');
 
 // ---------------------------- Read Updated State ----------------------------
 console.log('Reading updated contract state...');
 const updatedValue = await zkApp.protectedValue.get();
 console.log('Updated protected value:', updatedValue.toBigInt());
-equal(updatedValue.toBigInt(), BigInt(555), 'Protected value should be updated to 555');
+equal(
+  updatedValue.toBigInt(),
+  BigInt(555),
+  'Protected value should be updated to 555'
+);
