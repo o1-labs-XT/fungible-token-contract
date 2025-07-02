@@ -12,7 +12,6 @@ import {
   PublicKey,
   State,
   state,
-  Struct,
   TokenContract,
   Types,
   UInt64,
@@ -37,6 +36,21 @@ import {
   FlagTypes,
 } from './configs.js';
 import { SideloadedProof } from './side-loaded/program.eg.js';
+import { FungibleTokenErrors } from './lib/errors.js';
+import {
+  SetAdminEvent,
+  MintEvent,
+  BurnEvent,
+  TransferEvent,
+  BalanceChangeEvent,
+  SideLoadedVKeyUpdateEvent,
+  InitializationEvent,
+  VerificationKeyUpdateEvent,
+  ConfigStructureUpdateEvent,
+  AmountValueUpdateEvent,
+  DynamicProofConfigUpdateEvent,
+  ConfigFlagUpdateEvent,
+} from './lib/events.js';
 
 const { IndexedMerkleMap } = Experimental;
 
@@ -61,73 +75,14 @@ export {
   ConfigFlagUpdateEvent,
 };
 
-interface FungibleTokenDeployProps extends Exclude<DeployArgs, undefined> {
+export interface FungibleTokenDeployProps
+  extends Exclude<DeployArgs, undefined> {
   /** The token symbol. */
   symbol: string;
   /** A source code reference, which is placed within the `zkappUri` of the contract account.
    * Typically a link to a file on github. */
   src: string;
 }
-
-const FungibleTokenErrors = {
-  // Admin & Authorization
-  noPermissionToChangeAdmin:
-    'Unauthorized: Admin signature required to change admin',
-  noPermissionToChangeVerificationKey:
-    'Unauthorized: Admin signature required to update verification key',
-
-  // Token Operations
-  noPermissionToMint:
-    'Unauthorized: Minting not allowed with current configuration',
-  noPermissionToBurn:
-    'Unauthorized: Burning not allowed with current configuration',
-  noPermissionForSideloadDisabledOperation:
-    "Can't use the method, side-loading is enabled in config",
-  noTransferFromCirculation:
-    'Invalid operation: Cannot transfer to/from circulation tracking account',
-
-  // Side-loaded Proof Validation
-  vKeyMapOutOfSync:
-    'Verification failed: Off-chain verification key map is out of sync with on-chain state',
-  invalidOperationKey:
-    'Invalid operation key: Must be 1 (Mint), 2 (Burn), 3 (Transfer), or 4 (ApproveBase)',
-  invalidSideLoadedVKey:
-    'Verification failed: Provided verification key does not match registered hash',
-  missingVKeyForOperation:
-    'Missing verification key: No key registered for this operation type',
-  recipientMismatch:
-    'Verification failed: Proof recipient does not match method parameter',
-  tokenIdMismatch:
-    'Verification failed: Token ID in proof does not match contract token ID',
-  incorrectMinaTokenId:
-    'Verification failed: Expected native MINA token ID (1)',
-  minaBalanceMismatch:
-    'Verification failed: MINA balance changed between proof generation and verification',
-  customTokenBalanceMismatch:
-    'Verification failed: Custom token balance changed between proof generation and verification',
-  minaNonceMismatch:
-    'Verification failed: MINA account nonce changed between proof generation and verification',
-  customTokenNonceMismatch:
-    'Verification failed: Custom token account nonce changed between proof generation and verification',
-
-  // Transaction Validation
-  flashMinting:
-    'Transaction invalid: Flash-minting detected. Ensure AccountUpdates are properly ordered and transaction is balanced',
-  unbalancedTransaction:
-    'Transaction invalid: Token debits and credits do not balance to zero',
-  noPermissionChangeAllowed:
-    'Permission denied: Cannot modify access or receive permissions on token accounts',
-
-  // Method Overrides
-  useCustomApproveMethod:
-    'Method overridden: Use approveBaseCustom() for side-loaded proof support instead of approveBase()',
-  useCustomApproveAccountUpdate:
-    'Method overridden: Use approveAccountUpdateCustom() for side-loaded proof support instead of approveAccountUpdate()',
-  useCustomApproveAccountUpdates:
-    'Method overridden: Use approveAccountUpdatesCustom() for side-loaded proof support instead of approveAccountUpdates()',
-  useCustomTransferMethod:
-    'Method overridden: Use transferCustom() for side-loaded proof support instead of transfer()',
-};
 
 class FungibleToken extends TokenContract {
   @state(UInt8) decimals = State<UInt8>();
@@ -1391,70 +1346,6 @@ class FungibleToken extends TokenContract {
     );
   }
 }
-
-class SetAdminEvent extends Struct({
-  previousAdmin: PublicKey,
-  newAdmin: PublicKey,
-}) {}
-class MintEvent extends Struct({
-  recipient: PublicKey,
-  amount: UInt64,
-}) {}
-
-class BurnEvent extends Struct({
-  from: PublicKey,
-  amount: UInt64,
-}) {}
-
-class BalanceChangeEvent extends Struct({
-  address: PublicKey,
-  amount: Int64,
-}) {}
-
-class SideLoadedVKeyUpdateEvent extends Struct({
-  operationKey: Field,
-  newVKeyHash: Field,
-  newMerkleRoot: Field,
-}) {}
-
-class TransferEvent extends Struct({
-  from: PublicKey,
-  to: PublicKey,
-  amount: UInt64,
-}) {}
-
-class InitializationEvent extends Struct({
-  admin: PublicKey,
-  decimals: UInt8,
-}) {}
-
-class VerificationKeyUpdateEvent extends Struct({
-  vKeyHash: Field,
-}) {}
-
-class ConfigStructureUpdateEvent extends Struct({
-  updateType: Field, // EventTypes.Config or EventTypes.Params
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-}) {}
-
-class AmountValueUpdateEvent extends Struct({
-  parameterType: Field, // ParameterTypes.FixedAmount, MinAmount, or MaxAmount
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-  oldValue: UInt64,
-  newValue: UInt64,
-}) {}
-
-class DynamicProofConfigUpdateEvent extends Struct({
-  operationType: Field, // OperationKeys.Mint, Burn, Transfer, or ApproveBase
-  newConfig: Field, // The updated packed configuration
-}) {}
-
-class ConfigFlagUpdateEvent extends Struct({
-  flagType: Field, // FlagTypes.FixedAmount, RangedAmount, or Unauthorized
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-  oldValue: Bool,
-  newValue: Bool,
-}) {}
 
 // copied from: https://github.com/o1-labs/o1js/blob/6ebbc23710f6de023fea6d83dc93c5a914c571f2/src/lib/mina/token/token-contract.ts#L189
 function toForest(

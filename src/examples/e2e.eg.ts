@@ -16,6 +16,7 @@ import {
   UpdatesDynamicProofConfig,
 } from '../configs.js';
 import { equal } from 'node:assert';
+import { CoreToken } from '../CoreToken.js';
 
 const localChain = await Mina.LocalBlockchain({
   proofsEnabled: false,
@@ -27,16 +28,7 @@ const fee = 1e8;
 
 const [deployer, owner, admin, alexa, billy] = localChain.testAccounts;
 const contract = PrivateKey.randomKeypair();
-const token = new FungibleToken(contract.publicKey);
-
-const mintParams = MintParams.create(MintConfig.default, {
-  minAmount: UInt64.from(1),
-  maxAmount: UInt64.from(1000),
-});
-const burnParams = BurnParams.create(BurnConfig.default, {
-  minAmount: UInt64.from(100),
-  maxAmount: UInt64.from(1500),
-});
+const token = new CoreToken(contract.publicKey);
 
 console.log('Deploying token contract.');
 const deployTx = await Mina.transaction(
@@ -52,18 +44,7 @@ const deployTx = await Mina.transaction(
       src: 'https://github.com/o1-labs-XT/fungible-token-contract/blob/main/src/FungibleTokenContract.ts',
     });
 
-    await token.initialize(
-      admin,
-      UInt8.from(9),
-      MintConfig.default,
-      mintParams,
-      BurnConfig.default,
-      burnParams,
-      MintDynamicProofConfig.default,
-      BurnDynamicProofConfig.default,
-      TransferDynamicProofConfig.default,
-      UpdatesDynamicProofConfig.default
-    );
+    await token.initialize(admin, UInt8.from(9));
   }
 );
 
@@ -86,7 +67,7 @@ const dummyProof: SideloadedProof = await generateDummyDynamicProof(
 );
 const mintTx = await Mina.transaction({ sender: owner, fee }, async () => {
   AccountUpdate.fundNewAccount(owner, 1);
-  await token.mint(alexa, mintParams.maxAmount);
+  await token.mint(alexa, UInt64.from(1000));
 });
 await mintTx.prove();
 mintTx.sign([owner.key, admin.key]);
@@ -105,7 +86,7 @@ equal(alexaBalanceBeforeMint, 0n);
 console.log('Transferring tokens from Alexa to Billy');
 const transferTx = await Mina.transaction({ sender: alexa, fee }, async () => {
   AccountUpdate.fundNewAccount(alexa, 1);
-  await token.transferCustom(alexa, billy, mintParams.maxAmount);
+  await token.transferCustom(alexa, billy, UInt64.from(1000));
 });
 
 await transferTx.prove();
@@ -120,11 +101,11 @@ equal(alexaBalanceAfterTransfer, 0n);
 
 const billyBalanceAfterTransfer = (await token.getBalanceOf(billy)).toBigInt();
 console.log('Billy balance after transfer:', billyBalanceAfterTransfer);
-equal(billyBalanceAfterTransfer, mintParams.maxAmount.toBigInt());
+equal(billyBalanceAfterTransfer, UInt64.from(1000).toBigInt());
 
 console.log("Burning Billy's tokens");
 const burnTx = await Mina.transaction({ sender: billy, fee }, async () => {
-  await token.burn(billy, burnParams.fixedAmount);
+  await token.burn(billy, UInt64.from(1000));
 });
 await burnTx.prove();
 burnTx.sign([billy.key]);
@@ -136,5 +117,5 @@ const billyBalanceAfterBurn = (await token.getBalanceOf(billy)).toBigInt();
 console.log('Billy balance after burn:', billyBalanceAfterBurn);
 equal(
   billyBalanceAfterBurn,
-  mintParams.maxAmount.toBigInt() - burnParams.fixedAmount.toBigInt()
+  UInt64.from(1000).toBigInt() - UInt64.from(1000).toBigInt()
 );
