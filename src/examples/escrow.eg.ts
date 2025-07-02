@@ -13,7 +13,6 @@ import {
   state,
   UInt64,
   UInt8,
-  VerificationKey,
 } from 'o1js';
 import {
   MintConfig,
@@ -25,11 +24,7 @@ import {
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
 } from '../configs.js';
-import {
-  generateDummyDynamicProof,
-  SideloadedProof,
-} from '../side-loaded/program.eg.js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
+import { FungibleToken } from '../FungibleTokenContract.js';
 
 export class TokenEscrow extends SmartContract {
   @state(PublicKey)
@@ -118,7 +113,6 @@ const burnParams = BurnParams.create(BurnConfig.default, {
 });
 
 const tokenContract = new FungibleToken(tokenContractKeyPair.publicKey);
-const tokenId = tokenContract.deriveTokenId();
 const escrowContract = new TokenEscrow(escrowContractKeyPair.publicKey);
 
 console.log('Compiling contracts...');

@@ -64,7 +64,7 @@ class SideloadedProofVerifierZkApp extends SmartContract {
     );
 
     // Get ECDSA proof's public key from output
-    const signerPublicKey = ecdsaProof.publicOutput.publicKey;
+    // const signerPublicKey = ecdsaProof.publicOutput.publicKey;
     // TODO: You can use the signer's public key here for additional checks
     // For example: verify if the signer is authorized, maintain a list of trusted signers, etc.
 
@@ -75,7 +75,7 @@ class SideloadedProofVerifierZkApp extends SmartContract {
     );
 
     // Get Keccak proof's expected hash from input
-    const expectedKeccakHash = keccakProof.publicInput.hash;
+    // const expectedKeccakHash = keccakProof.publicInput.hash;
     // TODO: You can use the hash here for additional checks
     // For example: verify if the hash matches some expected value, store it for future reference, etc.
 

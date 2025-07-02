@@ -27,7 +27,6 @@ import {
   ConfigErrors,
   ParameterTypes,
   FlagTypes,
-  DynamicProofConfig,
 } from '../configs.js';
 import {
   program,
@@ -515,12 +514,7 @@ describe('Fungible Token - Mint Tests', () => {
       expect(configs[2]).toBeInstanceOf(Field);
       expect(configs[3]).toBeInstanceOf(Field);
 
-      const [
-        packedAmountConfigs,
-        packedMintParams,
-        packedBurnParams,
-        packedDynamicProofConfigs,
-      ] = configs;
+      const [packedAmountConfigs, packedMintParams, packedBurnParams] = configs;
 
       const mintConfig = MintConfig.unpack(packedAmountConfigs);
       const burnConfig = BurnConfig.unpack(packedAmountConfigs);
@@ -715,7 +709,6 @@ describe('Fungible Token - Mint Tests', () => {
       const packedConfigsBefore = tokenContract.packedAmountConfigs.get();
       const mintConfigBefore = MintConfig.unpack(packedConfigsBefore);
       const originalUnauthorized = mintConfigBefore.unauthorized;
-      const originalRangedAmount = mintConfigBefore.rangedAmount;
 
       const newFixedAmountValue = Bool(true);
       await updateMintConfigPropertyTx(
@@ -763,7 +756,6 @@ describe('Fungible Token - Mint Tests', () => {
     it('should update mint ranged amount config via field-specific function', async () => {
       const packedConfigsBefore = tokenContract.packedAmountConfigs.get();
       const mintConfigBefore = MintConfig.unpack(packedConfigsBefore);
-      const originalFixedAmount = mintConfigBefore.fixedAmount;
       const originalUnauthorized = mintConfigBefore.unauthorized;
       const newRangedAmountValue = Bool(false);
       await updateMintConfigPropertyTx(
@@ -947,7 +939,6 @@ describe('Fungible Token - Mint Tests', () => {
     });
 
     it('should reject mint fixed amount update via field-specific function when unauthorized by admin', async () => {
-      1;
       const paramsBeforeAttempt = MintParams.unpack(
         tokenContract.packedMintParams.get()
       );
