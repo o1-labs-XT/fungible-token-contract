@@ -33,3 +33,11 @@ export {
   generateDummyDynamicProof,
   SideloadedProof,
 } from './side-loaded/program.eg.js';
+
+export type {
+  TokenAdmin,
+  TokenConfig,
+  SideloadedTokenContract,
+} from './interfaces/index.js';
+
+export { CoreToken } from './CoreFungibleToken.js';

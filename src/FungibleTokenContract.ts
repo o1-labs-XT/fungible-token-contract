@@ -54,6 +54,7 @@ import {
   DynamicProofConfigUpdateEvent,
   ConfigFlagUpdateEvent,
 } from './lib/events.js';
+import { TokenAdmin, TokenConfig, SideloadedTokenContract } from './interfaces/index.js';
 
 // =============================================================================
 // EXPORTS
@@ -106,7 +107,7 @@ interface FungibleTokenDeployProps extends Exclude<DeployArgs, undefined> {
 // MAIN CONTRACT CLASS
 // =============================================================================
 
-class FungibleToken extends TokenContract {
+class FungibleToken extends TokenContract implements TokenAdmin, TokenConfig, SideloadedTokenContract {
   // =============================================================================
   // STATE & EVENTS
   // =============================================================================
