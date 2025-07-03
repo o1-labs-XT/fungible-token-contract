@@ -9,7 +9,7 @@ export {
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
   OperationKeys,
-} from './configs.js';
+} from './lib/configs.js';
 
 export {
   FungibleTokenErrors,

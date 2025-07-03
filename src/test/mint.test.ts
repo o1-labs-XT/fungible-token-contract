@@ -28,7 +28,7 @@ import {
   ParameterTypes,
   FlagTypes,
   DynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,

@@ -24,7 +24,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   generateDummyDynamicProof,
   SideloadedProof,

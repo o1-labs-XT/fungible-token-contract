@@ -37,7 +37,7 @@ import {
   FlagTypes,
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
-} from './configs.js';
+} from './lib/configs.js';
 import { SideloadedProof } from './side-loaded/program.eg.js';
 import { FungibleTokenErrors } from './lib/errors.js';
 import {

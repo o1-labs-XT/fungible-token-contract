@@ -28,7 +28,7 @@ import {
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   OperationKeys,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,

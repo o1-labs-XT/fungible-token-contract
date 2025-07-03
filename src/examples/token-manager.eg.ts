@@ -35,7 +35,7 @@ import {
   MintParams,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // ECDSA curve setup
