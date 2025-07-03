@@ -540,6 +540,11 @@ describe('Fungible Token - Mint Tests', () => {
       expect(unpackedBurnParams.minAmount).toEqual(burnParams.minAmount);
       expect(unpackedBurnParams.maxAmount).toEqual(burnParams.maxAmount);
     });
+
+    it('should return correct admin after initialization', async () => {
+      const currentAdmin = await tokenContract.getAdmin();
+      expect(currentAdmin.toBase58()).toEqual(tokenAdmin.toBase58());
+    });
   });
 
   describe('Mint Operations - Default Config (Authorized/Ranged)', () => {

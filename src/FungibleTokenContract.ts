@@ -845,6 +845,11 @@ class FungibleToken extends TokenContract implements TokenAdmin, TokenConfig, Si
     return this.decimals.getAndRequireEquals();
   }
 
+  @method.returns(PublicKey)
+  async getAdmin(): Promise<PublicKey> {
+    return this.admin.getAndRequireEquals();
+  }
+
   /**
    * Retrieves all current token configurations in packed form.
    * Caller can unpack off-chain using respective unpack methods.
