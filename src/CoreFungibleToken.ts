@@ -88,7 +88,6 @@ export class CoreToken {
     );
   }
 
-  // Approval methods
   async approveAccountUpdateCustom(
     accountUpdate: AccountUpdate | AccountUpdateTree
   ) {
@@ -115,5 +114,9 @@ export class CoreToken {
 
   async getDecimals() {
     return await this.token.getDecimals();
+  }
+
+  async getAdmin() {
+    return await this.token.getAdmin();
   }
 }
