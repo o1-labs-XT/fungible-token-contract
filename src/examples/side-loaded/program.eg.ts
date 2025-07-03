@@ -1,13 +1,12 @@
 import {
   ZkProgram,
   Field,
-  DynamicProof,
-  Struct,
   AccountUpdate,
   PublicKey,
   UInt64,
   UInt32,
 } from 'o1js';
+import { PublicInputs, PublicOutputs, SideloadedProof } from '../../lib/sideloaded.js';
 
 export {
   program,
@@ -21,20 +20,6 @@ export {
   Program2Proof,
   generateDynamicProof2,
 };
-
-class PublicInputs extends Struct({
-  tokenId: Field,
-  address: PublicKey,
-}) {}
-
-class PublicOutputs extends Struct({
-  minaAccountData: AccountUpdate,
-  tokenIdAccountData: AccountUpdate,
-  minaBalance: UInt64,
-  tokenIdBalance: UInt64,
-  minaNonce: UInt32,
-  tokenIdNonce: UInt32,
-}) {}
 
 const program = ZkProgram({
   name: 'approve-mint',
@@ -77,12 +62,6 @@ const program = ZkProgram({
 });
 
 class ProgramProof extends ZkProgram.Proof(program) {}
-
-class SideloadedProof extends DynamicProof<PublicInputs, PublicOutputs> {
-  static publicInputType = PublicInputs;
-  static publicOutputType = PublicOutputs;
-  static maxProofsVerified = 0 as const;
-}
 
 // ---------------------- UTILS ----------------------------
 

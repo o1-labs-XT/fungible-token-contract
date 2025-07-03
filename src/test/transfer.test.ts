@@ -32,7 +32,7 @@ import {
   generateDynamicProof2,
   SideloadedProof,
   program2,
-} from '../side-loaded/program.eg.js';
+} from '../examples/side-loaded/program.eg.js';
 import { TEST_ERROR_MESSAGES } from './constants.js';
 
 const proofsEnabled = false;
@@ -322,7 +322,8 @@ describe('Fungible Token - Transfer Tests', () => {
 
     it('should reject a transaction not signed by the token holder using sideload-disabled method', async () => {
       const transferAmount = UInt64.from(100);
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.INVALID_SIGNATURE_FEE_PAYER;
+      const expectedErrorMessage =
+        TEST_ERROR_MESSAGES.INVALID_SIGNATURE_FEE_PAYER;
       await testTransferSideloadDisabledTx(
         user1,
         user3,
@@ -332,7 +333,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers from account that\'s tracking circulation', async () => {
+    it("should prevent transfers from account that's tracking circulation", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -345,7 +346,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers from account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should prevent transfers from account that's tracking circulation using sideload-disabled method", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -358,7 +359,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers to account that\'s tracking circulation', async () => {
+    it("should prevent transfers to account that's tracking circulation", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -371,7 +372,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers to account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should prevent transfers to account that's tracking circulation using sideload-disabled method", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -406,7 +407,8 @@ describe('Fungible Token - Transfer Tests', () => {
           .send()
           .wait();
       } catch (error: unknown) {
-        const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+        const expectedErrorMessage =
+          TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
         expect((error as Error).message).toContain(expectedErrorMessage);
       }
     });
@@ -434,7 +436,8 @@ describe('Fungible Token - Transfer Tests', () => {
 
   describe('Side-loaded Verification Key Updates', () => {
     it('should reject updating sideloaded verification key hash: unauthorized by admin', async () => {
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+      const expectedErrorMessage =
+        TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
       await updateSLVkeyHashTx(
         user1,
         programVkey,

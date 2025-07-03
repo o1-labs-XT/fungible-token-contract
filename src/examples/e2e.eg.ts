@@ -4,7 +4,7 @@ import { VerificationKey } from 'o1js';
 import {
   generateDummyDynamicProof,
   SideloadedProof,
-} from '../side-loaded/program.eg.js';
+} from './side-loaded/program.eg.js';
 import {
   MintConfig,
   MintParams,

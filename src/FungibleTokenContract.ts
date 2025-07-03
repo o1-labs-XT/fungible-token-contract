@@ -38,7 +38,7 @@ import {
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
 } from './lib/configs.js';
-import { SideloadedProof } from './side-loaded/program.eg.js';
+import { SideloadedProof } from './lib/sideloaded.js';
 import { FungibleTokenErrors } from './lib/errors.js';
 import {
   SetAdminEvent,

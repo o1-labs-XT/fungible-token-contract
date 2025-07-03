@@ -28,7 +28,7 @@ import {
 import {
   generateDummyDynamicProof,
   SideloadedProof,
-} from '../side-loaded/program.eg.js';
+} from './side-loaded/program.eg.js';
 import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
 
 export class TokenEscrow extends SmartContract {

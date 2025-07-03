@@ -1,6 +1,6 @@
 import { equal } from 'node:assert';
 import { AccountUpdate, Bool, Mina, PrivateKey, UInt64, UInt8 } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from './FungibleTokenContract.js';
+import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
 import {
   MintConfig,
   MintParams,
@@ -10,7 +10,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from './lib/configs.js';
+} from '../lib/configs.js';
 import {
   generateDummyDynamicProof,
   program,
