@@ -18,7 +18,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from './configs.js';
+} from './lib/configs.js';
 
 const defaultMintParams = MintParams.create(MintConfig.default, {
   minAmount: UInt64.from(1),

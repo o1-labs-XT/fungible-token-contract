@@ -14,7 +14,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // Set up local blockchain
