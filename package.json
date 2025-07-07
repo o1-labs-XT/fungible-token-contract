@@ -2,13 +2,13 @@
   "name": "fungible-token-contract",
   "version": "0.1.0",
   "description": "A configurable token contract for Mina",
-  "author": "",
   "license": "Apache-2.0",
   "homepage": "https://github.com/o1-labs-XT/fungible-token-contract",
   "repository": {
     "type": "git",
     "url": "https://github.com/o1-labs-XT/fungible-token-contract.git"
   },
+  "author": "O(1) Labs",
   "keywords": [
     "mina-zkapp",
     "mina-zk-app",
