@@ -1,7 +1,7 @@
 {
   "name": "fungible-token-contract",
   "version": "0.1.0",
-  "description": "",
+  "description": "A configurable token contract for Mina",
   "author": "",
   "license": "Apache-2.0",
   "keywords": [
