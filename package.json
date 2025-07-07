@@ -5,6 +5,10 @@
   "author": "",
   "license": "Apache-2.0",
   "homepage": "https://github.com/o1-labs-XT/fungible-token-contract",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/o1-labs-XT/fungible-token-contract.git"
+  },
   "keywords": [
     "mina-zkapp",
     "mina-zk-app",
