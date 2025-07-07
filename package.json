@@ -4,6 +4,7 @@
   "description": "A configurable token contract for Mina",
   "author": "",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/o1-labs-XT/fungible-token-contract",
   "keywords": [
     "mina-zkapp",
     "mina-zk-app",
