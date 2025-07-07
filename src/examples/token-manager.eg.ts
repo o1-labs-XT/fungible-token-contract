@@ -198,11 +198,7 @@ const deployTx = await Mina.transaction(
         fixedAmount: UInt64.from(100),
         minAmount: UInt64.from(20),
         maxAmount: UInt64.MAXINT(),
-      }),
-      MintDynamicProofConfig.default,
-      BurnDynamicProofConfig.default,
-      TransferDynamicProofConfig.default,
-      UpdatesDynamicProofConfig.default
+      })
     );
   }
 );

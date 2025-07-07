@@ -145,11 +145,7 @@ const deployTx = await Mina.transaction(
       MintConfig.default,
       mintParams,
       BurnConfig.default,
-      burnParams,
-      MintDynamicProofConfig.default,
-      BurnDynamicProofConfig.default,
-      TransferDynamicProofConfig.default,
-      UpdatesDynamicProofConfig.default
+      burnParams
     );
   }
 );
