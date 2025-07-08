@@ -39,5 +39,3 @@ export type {
   TokenConfig,
   SideloadedTokenContract,
 } from './interfaces/index.js';
-
-export { CoreToken } from './CoreFungibleToken.js';
