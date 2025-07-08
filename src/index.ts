@@ -35,7 +35,6 @@ export {
 } from './side-loaded/program.eg.js';
 
 export type {
-  TokenAdmin,
-  TokenConfig,
-  SideloadedTokenContract,
+  Admin,
+  Sideloaded,
 } from './interfaces/index.js';
