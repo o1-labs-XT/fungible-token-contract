@@ -1,3 +1,3 @@
-export type { TokenAdmin } from './TokenAdmin.js';
-export type { TokenConfig } from './TokenConfig.js';
-export type { SideloadedTokenContract } from './SideloadedTokenContract.js';
+export type { Admin } from './admin.d.ts';
+export type { Sideloaded } from './sideloaded.d.ts';
+export type { Core, FungibleTokenDeployProps } from './core.d.ts';
