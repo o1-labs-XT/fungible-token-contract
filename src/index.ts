@@ -32,7 +32,7 @@ export {
 export {
   generateDummyDynamicProof,
   SideloadedProof,
-} from './side-loaded/program.eg.js';
+} from './examples/side-loaded/program.eg.js';
 
 export type {
   TokenAdmin,
