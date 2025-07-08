@@ -25,7 +25,7 @@ import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
 import {
   generateDummyDynamicProof,
   SideloadedProof,
-} from '../side-loaded/program.eg.js';
+} from './side-loaded/program.eg.js';
 import {
   BurnConfig,
   BurnDynamicProofConfig,
@@ -35,7 +35,7 @@ import {
   MintParams,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // ECDSA curve setup

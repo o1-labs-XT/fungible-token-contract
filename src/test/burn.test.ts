@@ -28,7 +28,7 @@ import {
   ParameterTypes,
   FlagTypes,
   DynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,
@@ -36,7 +36,7 @@ import {
   generateDynamicProof2,
   SideloadedProof,
   program2,
-} from '../side-loaded/program.eg.js';
+} from '../examples/side-loaded/program.eg.js';
 import {
   CONFIG_PROPERTIES,
   PARAMS_PROPERTIES,

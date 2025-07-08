@@ -37,8 +37,8 @@ import {
   FlagTypes,
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
-} from './configs.js';
-import { SideloadedProof } from './side-loaded/program.eg.js';
+} from './lib/configs.js';
+import { SideloadedProof } from './lib/sideloaded.js';
 import { FungibleTokenErrors } from './lib/errors.js';
 import {
   SetAdminEvent,
@@ -695,6 +695,16 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     return this.decimals.getAndRequireEquals();
   }
 
+  @method.returns(PublicKey)
+  async getAdmin(): Promise<PublicKey> {
+    return this.admin.getAndRequireEquals();
+  }
+
+  /**
+   * Retrieves all current token configurations in packed form.
+   * Caller can unpack off-chain using respective unpack methods.
+   * @returns Field array: [packedAmountConfigs, packedMintParams, packedBurnParams, packedDynamicProofConfigs]
+   */
   async getAllConfigs(): Promise<Field[]> {
     const packedAmountConfigs = this.packedAmountConfigs.getAndRequireEquals();
     const packedMintParams = this.packedMintParams.getAndRequireEquals();

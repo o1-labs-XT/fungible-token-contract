@@ -28,7 +28,7 @@ import {
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   OperationKeys,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,
@@ -38,7 +38,7 @@ import {
   program2,
   PublicInputs,
   PublicOutputs,
-} from '../side-loaded/program.eg.js';
+} from '../examples/side-loaded/program.eg.js';
 import { TEST_ERROR_MESSAGES } from './constants.js';
 
 const proofsEnabled = false;
@@ -480,7 +480,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject manually constructed transfers from the account that\'s tracking circulation', async () => {
+    it("should reject manually constructed transfers from the account that's tracking circulation", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -518,7 +518,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject manually constructed transfers to the account that\'s tracking circulation', async () => {
+    it("should reject manually constructed transfers to the account that's tracking circulation", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -688,7 +688,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject manually constructed transfers from the account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should reject manually constructed transfers from the account that's tracking circulation using sideload-disabled method", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -724,7 +724,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
       );
     });
 
-    it('should reject manually constructed transfers to the account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should reject manually constructed transfers to the account that's tracking circulation using sideload-disabled method", async () => {
       const sendAmount = UInt64.from(10);
 
       const updateSend = AccountUpdate.createSigned(
@@ -762,7 +762,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
   });
 
   describe('Account Permissions', () => {
-    it('should reject a transaction that\'s changing the account permission for receive', async () => {
+    it("should reject a transaction that's changing the account permission for receive", async () => {
       const permissions = Mina.getAccount(
         user2,
         tokenContract.deriveTokenId()
@@ -797,7 +797,7 @@ describe('Fungible Token - ApproveBase Tests', () => {
         FungibleTokenErrors.noPermissionChangeAllowed
       );
     });
-    it('should reject a transaction that\'s changing the account permission for receive with approveBaseSideloadDisabled', async () => {
+    it("should reject a transaction that's changing the account permission for receive with approveBaseSideloadDisabled", async () => {
       const permissions = Mina.getAccount(
         user2,
         tokenContract.deriveTokenId()
@@ -849,7 +849,8 @@ describe('Fungible Token - ApproveBase Tests', () => {
         await updateUpdatesDynamicProofConfigTx.prove();
         await updateUpdatesDynamicProofConfigTx.sign([user2.key]).send().wait();
       } catch (error: unknown) {
-        const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+        const expectedErrorMessage =
+          TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
         expect((error as Error).message).toContain(expectedErrorMessage);
       }
     });
@@ -877,7 +878,8 @@ describe('Fungible Token - ApproveBase Tests', () => {
 
   describe('Side-loaded Verification Key Updates', () => {
     it('should reject updating sideloaded verification key hash: unauthorized by admin', async () => {
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+      const expectedErrorMessage =
+        TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
       await updateSLVkeyHashTx(
         user1,
         programVkey,

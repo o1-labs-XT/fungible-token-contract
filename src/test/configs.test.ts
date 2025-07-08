@@ -12,7 +12,7 @@ import {
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
   ConfigErrors,
-} from '../configs.js';
+} from '../lib/configs.js';
 
 describe('Fungible Token - Configuration Tests', () => {
   describe('Config Packing Operations', () => {

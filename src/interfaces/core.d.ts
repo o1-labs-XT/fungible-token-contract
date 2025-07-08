@@ -172,6 +172,13 @@ export interface Core {
   getDecimals(): Promise<UInt8>;
 
   /**
+   * Gets the current admin of the token contract.
+   *
+   * @returns The public key of the current admin
+   */
+  getAdmin(): Promise<PublicKey>;
+
+  /**
    * Gets the token ID for this contract.
    *
    * @returns The unique token ID derived for this contract

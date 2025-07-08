@@ -28,7 +28,7 @@ import {
   ParameterTypes,
   FlagTypes,
   DynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,
@@ -36,7 +36,7 @@ import {
   generateDynamicProof2,
   SideloadedProof,
   program2,
-} from '../side-loaded/program.eg.js';
+} from '../examples/side-loaded/program.eg.js';
 import {
   CONFIG_PROPERTIES,
   PARAMS_PROPERTIES,
@@ -539,6 +539,11 @@ describe('Fungible Token - Mint Tests', () => {
       expect(unpackedMintParams.maxAmount).toEqual(mintParams.maxAmount);
       expect(unpackedBurnParams.minAmount).toEqual(burnParams.minAmount);
       expect(unpackedBurnParams.maxAmount).toEqual(burnParams.maxAmount);
+    });
+
+    it('should return correct admin after initialization', async () => {
+      const currentAdmin = await tokenContract.getAdmin();
+      expect(currentAdmin.toBase58()).toEqual(tokenAdmin.toBase58());
     });
   });
 
