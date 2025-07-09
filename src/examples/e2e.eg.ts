@@ -4,7 +4,7 @@ import { VerificationKey } from 'o1js';
 import {
   generateDummyDynamicProof,
   SideloadedProof,
-} from '../side-loaded/program.eg.js';
+} from './side-loaded/program.eg.js';
 import {
   MintConfig,
   MintParams,
@@ -14,7 +14,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // Set up local blockchain

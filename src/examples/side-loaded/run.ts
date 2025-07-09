@@ -9,7 +9,7 @@ import {
   UInt64,
   UInt8,
 } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
+import { FungibleToken, VKeyMerkleMap } from '../../FungibleTokenContract.js';
 import {
   MintConfig,
   MintParams,
@@ -20,7 +20,7 @@ import {
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   OperationKeys,
-} from '../configs.js';
+} from '../../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,

@@ -9,7 +9,7 @@ export {
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
   OperationKeys,
-} from './configs.js';
+} from './lib/configs.js';
 
 export {
   FungibleTokenErrors,
@@ -32,4 +32,9 @@ export {
 export {
   generateDummyDynamicProof,
   SideloadedProof,
-} from './side-loaded/program.eg.js';
+} from './examples/side-loaded/program.eg.js';
+
+export type {
+  Admin,
+  Sideloaded,
+} from './interfaces/index.js';

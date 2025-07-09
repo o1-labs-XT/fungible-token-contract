@@ -37,8 +37,8 @@ import {
   FlagTypes,
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
-} from './configs.js';
-import { SideloadedProof } from './side-loaded/program.eg.js';
+} from './lib/configs.js';
+import { SideloadedProof } from './lib/sideloaded.js';
 import { FungibleTokenErrors } from './lib/errors.js';
 import {
   SetAdminEvent,
@@ -54,6 +54,7 @@ import {
   DynamicProofConfigUpdateEvent,
   ConfigFlagUpdateEvent,
 } from './lib/events.js';
+import { Admin, Sideloaded, Core, FungibleTokenDeployProps } from './interfaces/index.js';
 
 // =============================================================================
 // EXPORTS
@@ -91,22 +92,13 @@ const { IndexedMerkleMap } = Experimental;
  */
 class VKeyMerkleMap extends IndexedMerkleMap(MERKLE_HEIGHT) {}
 
-/**
- * Deployment properties for the fungible token contract.
- */
-interface FungibleTokenDeployProps extends Exclude<DeployArgs, undefined> {
-  /** The token symbol. */
-  symbol: string;
-  /** A source code reference, which is placed within the `zkappUri` of the contract account.
-   * Typically a link to a file on github. */
-  src: string;
-}
+
 
 // =============================================================================
 // MAIN CONTRACT CLASS
 // =============================================================================
 
-class FungibleToken extends TokenContract {
+class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   // =============================================================================
   // STATE & EVENTS
   // =============================================================================
@@ -139,11 +131,6 @@ class FungibleToken extends TokenContract {
   // INITIALIZATION & DEPLOYMENT
   // =============================================================================
 
-  /**
-   * Deploys the fungible token contract with specified properties.
-   *
-   * @param props - Deployment properties including symbol and source reference
-   */
   async deploy(props: FungibleTokenDeployProps) {
     await super.deploy(props);
     this.account.zkappUri.set(props.src);
@@ -158,21 +145,6 @@ class FungibleToken extends TokenContract {
     });
   }
 
-  /**
-   * Initializes the token contract with configuration parameters.
-   * This method can only be called once when the contract is first deployed.
-   *
-   * @param admin - Public key of the contract administrator
-   * @param decimals - Number of decimal places for the token
-   * @param mintConfig - Configuration for minting operations
-   * @param mintParams - Parameters for minting operations
-   * @param burnConfig - Configuration for burning operations
-   * @param burnParams - Parameters for burning operations
-   * @param mintDynamicProofConfig - Dynamic proof configuration for minting
-   * @param burnDynamicProofConfig - Dynamic proof configuration for burning
-   * @param transferDynamicProofConfig - Dynamic proof configuration for transfers
-   * @param updatesDynamicProofConfig - Dynamic proof configuration for updates
-   */
   @method
   async initialize(
     admin: PublicKey,
@@ -250,13 +222,6 @@ class FungibleToken extends TokenContract {
     return accountUpdate;
   }
 
-  /**
-   * Updates the contract's verification key.
-   * This will only work after a hardfork that increments the transaction version,
-   * the permission will be treated as `signature`.
-   *
-   * @param vk - The new verification key to set
-   */
   @method
   async updateVerificationKey(vk: VerificationKey) {
     const canChangeVerificationKey = await this.canChangeVerificationKey(vk);
@@ -271,25 +236,6 @@ class FungibleToken extends TokenContract {
     );
   }
 
-  /**
-   * Updates the side-loaded verification key hash in the Merkle map for a specific token operation.
-   *
-   * This method allows the admin to register or update a verification key used for validating
-   * side-loaded proofs corresponding to a given operation. It verifies that the provided
-   * `operationKey` is valid before updating the Merkle map and account verification key.
-   *
-   * Supported `operationKey` values:
-   * - `1`: Mint
-   * - `2`: Burn
-   * - `3`: Transfer
-   * - `4`: ApproveBase
-   *
-   * @param vKey - The `VerificationKey` to associate with the given operation.
-   * @param operationKey - A `Field` representing the token operation type.
-   * @param vKeyMap - A `VKeyMerkleMap` containing all operation-to-vKey mappings.
-   *
-   * @throws If the `operationKey` is not one of the supported values.
-   */
   @method
   async updateSideLoadedVKeyHash(
     vKey: VerificationKey,
@@ -328,12 +274,6 @@ class FungibleToken extends TokenContract {
     );
   }
 
-  /**
-   * Sets a new administrator for the contract.
-   * Requires signature from the current admin.
-   *
-   * @param admin - Public key of the new administrator
-   */
   @method
   async setAdmin(admin: PublicKey) {
     const previousAdmin = this.admin.getAndRequireEquals();
@@ -354,16 +294,6 @@ class FungibleToken extends TokenContract {
   // TOKEN OPERATIONS - MINTING
   // =============================================================================
 
-  /**
-   * Mints tokens to a recipient using a side-loaded proof for validation.
-   *
-   * @param recipient - Public key of the token recipient
-   * @param amount - Amount of tokens to mint
-   * @param proof - Side-loaded proof for validation
-   * @param vk - Verification key for the side-loaded proof
-   * @param vKeyMap - Merkle map of verification keys
-   * @returns AccountUpdate for the minting operation
-   */
   @method.returns(AccountUpdate)
   async mintWithProof(
     recipient: PublicKey,
@@ -390,17 +320,6 @@ class FungibleToken extends TokenContract {
     return await this.#internalMint(recipient, amount);
   }
 
-  /**
-   * Mints tokens to a recipient without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the mint configuration.
-   *
-   * @param recipient - The public key of the account to receive the minted tokens
-   * @param amount - The amount of tokens to mint
-   * @returns The account update for the mint operation
-   * @throws {Error} If dynamic proof verification is enabled in the mint configuration
-   * @throws {Error} If the recipient is the circulation account
-   * @throws {Error} If the minting operation is not authorized
-   */
   @method.returns(AccountUpdate)
   async mint(recipient: PublicKey, amount: UInt64): Promise<AccountUpdate> {
     const packedDynamicProofConfigs =
@@ -454,16 +373,6 @@ class FungibleToken extends TokenContract {
   // TOKEN OPERATIONS - BURNING
   // =============================================================================
 
-  /**
-   * Burns tokens from an account using a side-loaded proof for validation.
-   *
-   * @param from - Public key of the account to burn tokens from
-   * @param amount - Amount of tokens to burn
-   * @param proof - Side-loaded proof for validation
-   * @param vk - Verification key for the side-loaded proof
-   * @param vKeyMap - Merkle map of verification keys
-   * @returns AccountUpdate for the burning operation
-   */
   @method.returns(AccountUpdate)
   async burnWithProof(
     from: PublicKey,
@@ -490,17 +399,6 @@ class FungibleToken extends TokenContract {
     return await this.#internalBurn(from, amount);
   }
 
-  /**
-   * Burns tokens from an account without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the burn configuration.
-   *
-   * @param from - The public key of the account to burn tokens from
-   * @param amount - The amount of tokens to burn
-   * @returns The account update for the burn operation
-   * @throws {Error} If dynamic proof verification is enabled in the burn configuration
-   * @throws {Error} If the from account is the circulation account
-   * @throws {Error} If the burning operation is not authorized
-   */
   @method.returns(AccountUpdate)
   async burn(from: PublicKey, amount: UInt64): Promise<AccountUpdate> {
     const packedDynamicProofConfigs =
@@ -581,16 +479,6 @@ class FungibleToken extends TokenContract {
     this.internalTransfer(from, to, amount);
   }
 
-  /**
-   * Transfers tokens between accounts without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the transfer configuration.
-   *
-   * @param from - The public key of the account to transfer tokens from
-   * @param to - The public key of the account to transfer tokens to
-   * @param amount - The amount of tokens to transfer
-   * @throws {Error} If dynamic proof verification is enabled in the transfer configuration
-   * @throws {Error} If either the from or to account is the circulation account
-   */
   @method
   async transferCustom(from: PublicKey, to: PublicKey, amount: UInt64) {
     const packedDynamicProofConfigs =
@@ -676,10 +564,6 @@ class FungibleToken extends TokenContract {
     throw new Error(FungibleTokenErrors.useCustomApproveAccountUpdates);
   }
 
-  /** Approve `AccountUpdate`s that have been created outside of the token contract.
-   *
-   * @argument {AccountUpdateForest} updates - The `AccountUpdate`s to approve. Note that the forest size is limited by the base token contract, @see TokenContract.MAX_ACCOUNT_UPDATES The current limit is 9.
-   */
   @method
   async approveBaseCustomWithProof(
     updates: AccountUpdateForest,
@@ -705,16 +589,6 @@ class FungibleToken extends TokenContract {
     this.internalApproveBase(updates);
   }
 
-  /**
-   * Approves a single account update without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the updates configuration.
-   *
-   * @param accountUpdate - The account update to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If the update involves the circulation account
-   * @throws {Error} If the update would result in flash minting
-   * @throws {Error} If the update would result in an unbalanced transaction
-   */
   async approveAccountUpdateCustom(
     accountUpdate: AccountUpdate | AccountUpdateTree
   ) {
@@ -722,16 +596,6 @@ class FungibleToken extends TokenContract {
     await this.approveBaseCustom(forest);
   }
 
-  /**
-   * Approves multiple account updates without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the updates configuration.
-   *
-   * @param accountUpdates - The account updates to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If any update involves the circulation account
-   * @throws {Error} If the updates would result in flash minting
-   * @throws {Error} If the updates would result in an unbalanced transaction
-   */
   async approveAccountUpdatesCustom(
     accountUpdates: (AccountUpdate | AccountUpdateTree)[]
   ) {
@@ -739,16 +603,6 @@ class FungibleToken extends TokenContract {
     await this.approveBaseCustom(forest);
   }
 
-  /**
-   * Approves a forest of account updates without requiring side-loaded proof verification.
-   * This function can only be used when dynamic proof verification is disabled in the updates configuration.
-   *
-   * @param updates - The forest of account updates to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If any update involves the circulation account
-   * @throws {Error} If the updates would result in flash minting
-   * @throws {Error} If the updates would result in an unbalanced transaction
-   */
   async approveBaseCustom(updates: AccountUpdateForest): Promise<void> {
     const packedDynamicProofConfigs =
       this.packedDynamicProofConfigs.getAndRequireEquals();
@@ -831,9 +685,6 @@ class FungibleToken extends TokenContract {
     return balance;
   }
 
-  /** Reports the current circulating supply
-   * This does take into account currently unreduced actions.
-   */
   async getCirculating(): Promise<UInt64> {
     let circulating = await this.getBalanceOf(this.address);
     return circulating;
@@ -842,6 +693,11 @@ class FungibleToken extends TokenContract {
   @method.returns(UInt8)
   async getDecimals(): Promise<UInt8> {
     return this.decimals.getAndRequireEquals();
+  }
+
+  @method.returns(PublicKey)
+  async getAdmin(): Promise<PublicKey> {
+    return this.admin.getAndRequireEquals();
   }
 
   /**
