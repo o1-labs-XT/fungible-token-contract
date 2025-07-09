@@ -6,7 +6,7 @@ import {
   AccountUpdateForest,
   VerificationKey,
 } from 'o1js';
-import { SideloadedProof } from '../side-loaded/program.eg.js';
+import { SideloadedProof } from '../lib/sideloaded.js';
 import { VKeyMerkleMap } from '../FungibleTokenContract.js';
 
 /**

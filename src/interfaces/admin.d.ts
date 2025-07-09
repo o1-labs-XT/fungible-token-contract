@@ -6,7 +6,7 @@ import {
   BurnConfig,
   MintParams,
   BurnParams,
-} from '../configs.js';
+} from '../lib/configs.js';
 
 /**
  * Administrative operations interface for token management.

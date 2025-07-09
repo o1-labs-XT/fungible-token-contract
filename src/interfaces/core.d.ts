@@ -17,7 +17,7 @@ import {
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 
 /**
  * Deployment properties for the fungible token contract.
