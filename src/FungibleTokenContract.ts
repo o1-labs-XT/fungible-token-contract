@@ -22,19 +22,12 @@ import {
   AccountUpdateTree,
 } from 'o1js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
   OperationKeys,
-  EventTypes,
-  ParameterTypes,
-  FlagTypes,
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
 } from './lib/configs.js';
@@ -49,10 +42,7 @@ import {
   InitializationEvent,
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
-  ConfigStructureUpdateEvent,
-  AmountValueUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  ConfigFlagUpdateEvent,
 } from './lib/events.js';
 import {
   Admin,
@@ -77,10 +67,7 @@ export {
   InitializationEvent,
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
-  ConfigStructureUpdateEvent,
-  AmountValueUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  ConfigFlagUpdateEvent,
   // Re-export errors from errors.js
   FungibleTokenErrors,
 };
