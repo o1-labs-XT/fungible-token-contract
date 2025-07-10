@@ -1,6 +1,6 @@
 {
   "name": "fungible-token-contract",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "A configurable token contract for Mina",
   "license": "Apache-2.0",
   "homepage": "https://github.com/o1-labs-XT/fungible-token-contract",
