@@ -54,7 +54,12 @@ import {
   DynamicProofConfigUpdateEvent,
   ConfigFlagUpdateEvent,
 } from './lib/events.js';
-import { Admin, Sideloaded, Core, FungibleTokenDeployProps } from './interfaces/index.js';
+import {
+  Admin,
+  Sideloaded,
+  Core,
+  FungibleTokenDeployProps,
+} from './interfaces/index.js';
 
 // =============================================================================
 // EXPORTS
@@ -91,8 +96,6 @@ const { IndexedMerkleMap } = Experimental;
  * Maps operation keys to their corresponding verification key hashes.
  */
 class VKeyMerkleMap extends IndexedMerkleMap(MERKLE_HEIGHT) {}
-
-
 
 // =============================================================================
 // MAIN CONTRACT CLASS
@@ -143,10 +146,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   async initialize(
     admin: PublicKey,
     decimals: UInt8,
-    mintConfig: MintConfig,
-    mintParams: MintParams,
-    burnConfig: BurnConfig,
-    burnParams: BurnParams,
     mintDynamicProofConfig: MintDynamicProofConfig,
     burnDynamicProofConfig: BurnDynamicProofConfig,
     transferDynamicProofConfig: TransferDynamicProofConfig,
@@ -156,18 +155,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
 
     this.admin.set(admin);
     this.decimals.set(decimals);
-
-    mintConfig.validate();
-    burnConfig.validate();
-    this.packedAmountConfigs.set(
-      MintConfig.packConfigs([mintConfig, burnConfig])
-    );
-
-    mintParams.validate();
-    this.packedMintParams.set(mintParams.pack());
-
-    burnParams.validate();
-    this.packedBurnParams.set(burnParams.pack());
 
     this.packedDynamicProofConfigs.set(
       MintDynamicProofConfig.packConfigs([
@@ -697,21 +684,13 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   /**
    * Retrieves all current token configurations in packed form.
    * Caller can unpack off-chain using respective unpack methods.
-   * @returns Field array: [packedAmountConfigs, packedMintParams, packedBurnParams, packedDynamicProofConfigs]
+   * @returns Field array: [packedDynamicProofConfigs]
    */
   async getAllConfigs(): Promise<Field[]> {
-    const packedAmountConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const packedMintParams = this.packedMintParams.getAndRequireEquals();
-    const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
     const packedDynamicProofConfigs =
       this.packedDynamicProofConfigs.getAndRequireEquals();
 
-    return [
-      packedAmountConfigs,
-      packedMintParams,
-      packedBurnParams,
-      packedDynamicProofConfigs,
-    ];
+    return [packedDynamicProofConfigs];
   }
 
   @method

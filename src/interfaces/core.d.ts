@@ -9,10 +9,6 @@ import {
   DeployArgs,
 } from 'o1js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
@@ -48,10 +44,6 @@ export interface Core {
    *
    * @param admin - Public key of the contract administrator
    * @param decimals - Number of decimal places for the token
-   * @param mintConfig - Configuration for minting operations
-   * @param mintParams - Parameters for minting operations
-   * @param burnConfig - Configuration for burning operations
-   * @param burnParams - Parameters for burning operations
    * @param mintDynamicProofConfig - Dynamic proof configuration for minting
    * @param burnDynamicProofConfig - Dynamic proof configuration for burning
    * @param transferDynamicProofConfig - Dynamic proof configuration for transfers
@@ -60,10 +52,6 @@ export interface Core {
   initialize(
     admin: PublicKey,
     decimals: UInt8,
-    mintConfig: MintConfig,
-    mintParams: MintParams,
-    burnConfig: BurnConfig,
-    burnParams: BurnParams,
     mintDynamicProofConfig: MintDynamicProofConfig,
     burnDynamicProofConfig: BurnDynamicProofConfig,
     transferDynamicProofConfig: TransferDynamicProofConfig,
@@ -189,7 +177,7 @@ export interface Core {
    * Retrieves all current token configurations in packed form.
    * Caller can unpack off-chain using respective unpack methods.
    *
-   * @returns Field array: [packedAmountConfigs, packedMintParams, packedBurnParams, packedDynamicProofConfigs]
+   * @returns Field array: [packedDynamicProofConfigs]
    */
   getAllConfigs(): Promise<Field[]>;
 } 
