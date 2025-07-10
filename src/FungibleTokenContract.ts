@@ -318,19 +318,16 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   /**
    * Internal mint implementation shared by both mint() and mintWithProof().
    * Contains the core minting logic without proof verification.
+   * Always requires admin signature for minting.
    */
   async #internalMint(
     recipient: PublicKey,
     amount: UInt64
   ): Promise<AccountUpdate> {
+    await this.ensureAdminSignature(Bool(true));
+
     const accountUpdate = this.internal.mint({ address: recipient, amount });
     accountUpdate.body.useFullCommitment = Bool(true);
-
-    const packedMintParams = this.packedMintParams.getAndRequireEquals();
-    const mintParams = MintParams.unpack(packedMintParams);
-
-    const canMint = await this.canMint(accountUpdate, mintParams);
-    canMint.assertTrue(FungibleTokenErrors.noPermissionToMint);
 
     recipient
       .equals(this.address)
@@ -401,12 +398,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   async #internalBurn(from: PublicKey, amount: UInt64): Promise<AccountUpdate> {
     const accountUpdate = this.internal.burn({ address: from, amount });
     accountUpdate.body.useFullCommitment = Bool(true);
-
-    const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
-    const burnParams = BurnParams.unpack(packedBurnParams);
-
-    const canBurn = await this.canBurn(accountUpdate, burnParams);
-    canBurn.assertTrue(FungibleTokenErrors.noPermissionToBurn);
 
     const circulationUpdate = AccountUpdate.create(
       this.address,
@@ -843,59 +834,7 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     return Bool(true);
   }
 
-  /**
-   * Checks if admin signature is required and ensures it's provided when needed.
-   * @param config - The configuration containing unauthorized flag
-   */
-  private async requiresAdminSignature(config: { unauthorized: Bool }) {
-    await this.ensureAdminSignature(config.unauthorized.not());
-  }
 
-  /**
-   * Validates that the balance change amount meets the configured constraints.
-   * @param accountUpdate - The account update to validate
-   * @param params - The parameters containing fixedAmount, minAmount, maxAmount
-   * @param config - The configuration containing fixedAmount, rangedAmount flags
-   * @returns Boolean indicating if the amount is valid
-   */
-  private isValidBalanceChange(
-    accountUpdate: AccountUpdate,
-    params: { fixedAmount: UInt64; minAmount: UInt64; maxAmount: UInt64 },
-    config: { fixedAmount: Bool; rangedAmount: Bool }
-  ): Bool {
-    const { fixedAmount, minAmount, maxAmount } = params;
-    const magnitude = accountUpdate.body.balanceChange.magnitude;
-
-    const isFixed = magnitude.equals(fixedAmount);
-
-    const lowerBound = magnitude.greaterThanOrEqual(minAmount);
-    const upperBound = magnitude.lessThanOrEqual(maxAmount);
-    const isInRange = lowerBound.and(upperBound);
-
-    const canPerform = Provable.switch(
-      [config.fixedAmount, config.rangedAmount],
-      Bool,
-      [isFixed, isInRange]
-    );
-
-    return canPerform;
-  }
-
-  private async canMint(accountUpdate: AccountUpdate, mintParams: MintParams) {
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const mintConfig = MintConfig.unpack(packedConfigs);
-
-    await this.requiresAdminSignature(mintConfig);
-    return this.isValidBalanceChange(accountUpdate, mintParams, mintConfig);
-  }
-
-  private async canBurn(accountUpdate: AccountUpdate, burnParams: BurnParams) {
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const burnConfig = BurnConfig.unpack(packedConfigs);
-
-    await this.requiresAdminSignature(burnConfig);
-    return this.isValidBalanceChange(accountUpdate, burnParams, burnConfig);
-  }
 
   private async verifySideLoadedProof(
     proof: SideloadedProof,
