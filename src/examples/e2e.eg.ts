@@ -76,11 +76,7 @@ const deployTx = await Mina.transaction({ sender: deployer, fee }, async () => {
     MintConfig.default,
     mintParams,
     burnConfig,
-    burnParams,
-    MintDynamicProofConfig.default,
-    BurnDynamicProofConfig.default,
-    TransferDynamicProofConfig.default,
-    UpdatesDynamicProofConfig.default
+    burnParams
   );
 });
 
