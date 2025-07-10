@@ -1,12 +1,6 @@
-import { PublicKey, VerificationKey, Field, Bool, UInt64 } from 'o1js';
+import { PublicKey, VerificationKey, Field } from 'o1js';
 import { VKeyMerkleMap } from '../FungibleTokenContract.js';
-import {
-  DynamicProofConfig,
-  MintConfig,
-  BurnConfig,
-  MintParams,
-  BurnParams,
-} from '../lib/configs.js';
+import { DynamicProofConfig } from '../lib/configs.js';
 
 /**
  * Administrative operations interface for token management.
@@ -66,68 +60,4 @@ export interface Admin {
     operationType: Field,
     config: DynamicProofConfig
   ): Promise<void>;
-
-  /**
-   * Updates the mint configuration settings.
-   * Requires admin signature.
-   *
-   * @param mintConfig - The new mint configuration to apply
-   */
-  updateMintConfig(mintConfig: MintConfig): Promise<void>;
-
-  /**
-   * Updates the burn configuration settings.
-   * Requires admin signature.
-   *
-   * @param burnConfig - The new burn configuration to apply
-   */
-  updateBurnConfig(burnConfig: BurnConfig): Promise<void>;
-
-  /**
-   * Updates the mint operation parameters.
-   * Requires admin signature.
-   *
-   * @param mintParams - The new mint parameters to apply
-   */
-  updateMintParams(mintParams: MintParams): Promise<void>;
-
-  /**
-   * Updates the burn operation parameters.
-   * Requires admin signature.
-   *
-   * @param burnParams - The new burn parameters to apply
-   */
-  updateBurnParams(burnParams: BurnParams): Promise<void>;
-
-  /**
-   * Updates a configuration flag for mint or burn operations.
-   * Requires admin signature.
-   *
-   * @param operationType - The operation type (Mint or Burn) to update the flag for
-   * @param flagType - The type of flag to update (FixedAmount, RangedAmount, or Unauthorized)
-   * @param value - The new boolean value for the flag
-   * @throws {Error} If the operation type is not Mint or Burn
-   * @throws {Error} If the flag type is invalid
-   */
-  updateConfigFlag(
-    operationType: Field,
-    flagType: Field,
-    value: Bool
-  ): Promise<void>;
-
-  /**
-   * Updates amount parameters for mint or burn operations.
-   * Requires admin signature.
-   *
-   * @param operationType - The operation type (Mint or Burn) to update the parameter for
-   * @param parameterType - The type of parameter to update (FixedAmount, MinAmount, or MaxAmount)
-   * @param value - The new amount value for the parameter
-   * @throws {Error} If the operation type is not Mint or Burn
-   * @throws {Error} If the parameter type is invalid
-   */
-  updateAmountParameter(
-    operationType: Field,
-    parameterType: Field,
-    value: UInt64
-  ): Promise<void>;
-} 
+}
