@@ -105,9 +105,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
 
   @state(UInt8) decimals = State<UInt8>();
   @state(PublicKey) admin = State<PublicKey>();
-  @state(Field) packedAmountConfigs = State<Field>();
-  @state(Field) packedMintParams = State<Field>();
-  @state(Field) packedBurnParams = State<Field>();
   @state(Field) packedDynamicProofConfigs = State<Field>();
   @state(Field) vKeyMapRoot = State<Field>(); // The side-loaded verification key hash.
 
@@ -121,9 +118,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     SideLoadedVKeyUpdate: SideLoadedVKeyUpdateEvent,
     Initialization: InitializationEvent,
     VerificationKeyUpdate: VerificationKeyUpdateEvent,
-    ConfigStructureUpdate: ConfigStructureUpdateEvent,
-    ConfigFlagUpdate: ConfigFlagUpdateEvent,
-    AmountValueUpdate: AmountValueUpdateEvent,
     DynamicProofConfigUpdate: DynamicProofConfigUpdateEvent,
   };
 
