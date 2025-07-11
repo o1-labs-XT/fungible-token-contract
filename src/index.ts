@@ -1,8 +1,4 @@
 export {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
@@ -23,10 +19,7 @@ export {
   InitializationEvent,
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
-  ConfigStructureUpdateEvent,
-  AmountValueUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  ConfigFlagUpdateEvent,
 } from './FungibleTokenContract.js';
 
 export {
@@ -34,7 +27,4 @@ export {
   SideloadedProof,
 } from './examples/side-loaded/program.eg.js';
 
-export type {
-  Admin,
-  Sideloaded,
-} from './interfaces/index.js';
+export type { Admin, Sideloaded } from './interfaces/index.js';
