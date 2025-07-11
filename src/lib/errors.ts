@@ -20,17 +20,13 @@ export const FungibleTokenErrors = {
   // TOKEN OPERATION ERRORS
   // =============================================================================
 
-  /** Error when minting is not allowed with current configuration */
-  noPermissionToMint:
-    'Unauthorized: Minting not allowed with current configuration',
-
-  /** Error when burning is not allowed with current configuration */
-  noPermissionToBurn:
-    'Unauthorized: Burning not allowed with current configuration',
-
   /** Error when trying to use sideload-disabled method while sideloading is enabled */
   noPermissionForSideloadDisabledOperation:
     "Can't use the method, side-loading is enabled in config",
+
+  /** Error when trying to use sideload-enabled method while sideloading is disabled */
+  proofMethodNotAllowed:
+    "Can't use proof-based method, side-loading is disabled in config",
 
   /** Error when trying to transfer to/from circulation tracking account */
   noTransferFromCirculation:

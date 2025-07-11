@@ -10,8 +10,8 @@ import {
   UInt8,
   VerificationKey,
   Permissions,
-  AccountUpdateForest,
   ZkProgram,
+  AccountUpdateForest,
 } from 'o1js';
 import {
   FungibleToken,
@@ -19,10 +19,6 @@ import {
   VKeyMerkleMap,
 } from '../FungibleTokenContract.js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
@@ -48,8 +44,6 @@ describe('Fungible Token - ApproveBase Tests', () => {
 
   let fee: number,
     tokenContract: FungibleToken,
-    mintParams: MintParams,
-    burnParams: BurnParams,
     vKeyMap: VKeyMerkleMap,
     dummyVkey: VerificationKey,
     dummyProof: SideloadedProof,
@@ -76,16 +70,6 @@ describe('Fungible Token - ApproveBase Tests', () => {
 
     [deployer, user1, user2, user3] = localChain.testAccounts;
     tokenContract = new FungibleToken(tokenA);
-
-    mintParams = MintParams.create(MintConfig.default, {
-      minAmount: UInt64.from(0),
-      maxAmount: UInt64.from(1000),
-    });
-
-    burnParams = BurnParams.create(BurnConfig.default, {
-      minAmount: UInt64.from(50),
-      maxAmount: UInt64.from(500),
-    });
 
     vKeyMap = new VKeyMerkleMap();
     dummyVkey = await VerificationKey.dummy();
@@ -257,10 +241,6 @@ describe('Fungible Token - ApproveBase Tests', () => {
         await tokenContract.initialize(
           tokenAdmin,
           UInt8.from(9),
-          MintConfig.default,
-          mintParams,
-          BurnConfig.default,
-          burnParams,
           MintDynamicProofConfig.default,
           BurnDynamicProofConfig.default,
           TransferDynamicProofConfig.default,
@@ -275,21 +255,9 @@ describe('Fungible Token - ApproveBase Tests', () => {
       const mintAmount = UInt64.from(1000);
       const tx = await Mina.transaction({ sender: user1, fee }, async () => {
         AccountUpdate.fundNewAccount(user1, 3);
-        await tokenContract.mintWithProof(
-          user1,
-          mintAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
+        await tokenContract.mint(user1, mintAmount);
 
-        await tokenContract.mintWithProof(
-          user2,
-          mintAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
+        await tokenContract.mint(user2, mintAmount);
       });
       await tx.prove();
       await tx.sign([user1.key, tokenAdmin.key]).send().wait();
@@ -297,21 +265,14 @@ describe('Fungible Token - ApproveBase Tests', () => {
   });
 
   // SLV = Side-Loaded Verification
-  describe('Account Update Approval Operations - Sideload Disabled', () => {
+  describe('Account Update Approval Operations', () => {
     it('should do a transfer from user2 to user3', async () => {
       const transferAmount = UInt64.from(100);
       const senderBalanceBefore = await tokenContract.getBalanceOf(user2);
       const receiverBalanceBefore = await tokenContract.getBalanceOf(user3);
       const tx = await Mina.transaction({ sender: user2, fee }, async () => {
         AccountUpdate.fundNewAccount(user2, 1);
-        await tokenContract.transferCustomWithProof(
-          user2,
-          user3,
-          transferAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
+        await tokenContract.transferCustom(user2, user3, transferAmount);
       });
       await tx.prove();
       await tx.sign([user2.key]).send().wait();
@@ -356,12 +317,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
           fee,
         },
         async () => {
-          await tokenContract.approveAccountUpdatesCustomWithProof(
-            [updateSend, updateReceive],
-            dummyProof,
-            dummyVkey,
-            vKeyMap
-          );
+          await tokenContract.approveAccountUpdatesCustom([
+            updateSend,
+            updateReceive,
+          ]);
         }
       );
       await tx.sign([user2.key, deployer.key]).prove();
@@ -398,12 +357,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
             fee,
           },
           async () => {
-            await tokenContract.approveAccountUpdatesCustomWithProof(
-              [updateReceive, updateSend],
-              dummyProof,
-              dummyVkey,
-              vKeyMap
-            );
+            await tokenContract.approveAccountUpdatesCustom([
+              updateReceive,
+              updateSend,
+            ]);
           }
         );
         await tx.prove();
@@ -429,12 +386,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
 
       const approveAccountUpdatesTx = async () => {
         const tx = await Mina.transaction(deployer, async () => {
-          await tokenContract.approveAccountUpdatesCustomWithProof(
-            [updateSend, updateReceive],
-            dummyProof,
-            dummyVkey,
-            vKeyMap
-          );
+          await tokenContract.approveAccountUpdatesCustom([
+            updateSend,
+            updateReceive,
+          ]);
         });
         await tx.prove();
         await tx.sign([deployer.key]).send().wait();
@@ -463,12 +418,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
           },
           async () => {
             AccountUpdate.fundNewAccount(user2, 1);
-            await tokenContract.approveAccountUpdatesCustomWithProof(
-              [updateSend, updateReceive],
-              dummyProof,
-              dummyVkey,
-              vKeyMap
-            );
+            await tokenContract.approveAccountUpdatesCustom([
+              updateSend,
+              updateReceive,
+            ]);
           }
         );
         await tx.prove();
@@ -501,12 +454,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
             fee,
           },
           async () => {
-            await tokenContract.approveAccountUpdatesCustomWithProof(
-              [updateSend, updateReceive],
-              dummyProof,
-              dummyVkey,
-              vKeyMap
-            );
+            await tokenContract.approveAccountUpdatesCustom([
+              updateSend,
+              updateReceive,
+            ]);
           }
         );
         await tx.prove();
@@ -539,12 +490,10 @@ describe('Fungible Token - ApproveBase Tests', () => {
             fee,
           },
           async () => {
-            await tokenContract.approveAccountUpdatesCustomWithProof(
-              [updateSend, updateReceive],
-              dummyProof,
-              dummyVkey,
-              vKeyMap
-            );
+            await tokenContract.approveAccountUpdatesCustom([
+              updateSend,
+              updateReceive,
+            ]);
           }
         );
         await tx.prove();

@@ -3,7 +3,6 @@ import {
   AccountUpdateForest,
   assert,
   Bool,
-  DeployArgs,
   Field,
   Int64,
   method,
@@ -12,7 +11,6 @@ import {
   PublicKey,
   State,
   state,
-  Struct,
   TokenContract,
   Types,
   UInt64,
@@ -22,19 +20,12 @@ import {
   AccountUpdateTree,
 } from 'o1js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
   OperationKeys,
-  EventTypes,
-  ParameterTypes,
-  FlagTypes,
   MERKLE_HEIGHT,
   MINA_TOKEN_ID,
 } from './lib/configs.js';
@@ -49,12 +40,14 @@ import {
   InitializationEvent,
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
-  ConfigStructureUpdateEvent,
-  AmountValueUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  ConfigFlagUpdateEvent,
 } from './lib/events.js';
-import { Admin, Sideloaded, Core, FungibleTokenDeployProps } from './interfaces/index.js';
+import {
+  Admin,
+  Sideloaded,
+  Core,
+  FungibleTokenDeployProps,
+} from './interfaces/index.js';
 
 // =============================================================================
 // EXPORTS
@@ -63,7 +56,7 @@ import { Admin, Sideloaded, Core, FungibleTokenDeployProps } from './interfaces/
 export {
   FungibleToken,
   VKeyMerkleMap,
-  // Re-export all events from events.js
+  // Re-export all events from lib/events.js
   SetAdminEvent,
   MintEvent,
   BurnEvent,
@@ -72,11 +65,8 @@ export {
   InitializationEvent,
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
-  ConfigStructureUpdateEvent,
-  AmountValueUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  ConfigFlagUpdateEvent,
-  // Re-export errors from errors.js
+  // Re-export errors from lib/errors.js
   FungibleTokenErrors,
 };
 
@@ -92,8 +82,6 @@ const { IndexedMerkleMap } = Experimental;
  */
 class VKeyMerkleMap extends IndexedMerkleMap(MERKLE_HEIGHT) {}
 
-
-
 // =============================================================================
 // MAIN CONTRACT CLASS
 // =============================================================================
@@ -105,9 +93,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
 
   @state(UInt8) decimals = State<UInt8>();
   @state(PublicKey) admin = State<PublicKey>();
-  @state(Field) packedAmountConfigs = State<Field>();
-  @state(Field) packedMintParams = State<Field>();
-  @state(Field) packedBurnParams = State<Field>();
   @state(Field) packedDynamicProofConfigs = State<Field>();
   @state(Field) vKeyMapRoot = State<Field>(); // The side-loaded verification key hash.
 
@@ -121,9 +106,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     SideLoadedVKeyUpdate: SideLoadedVKeyUpdateEvent,
     Initialization: InitializationEvent,
     VerificationKeyUpdate: VerificationKeyUpdateEvent,
-    ConfigStructureUpdate: ConfigStructureUpdateEvent,
-    ConfigFlagUpdate: ConfigFlagUpdateEvent,
-    AmountValueUpdate: AmountValueUpdateEvent,
     DynamicProofConfigUpdate: DynamicProofConfigUpdateEvent,
   };
 
@@ -149,31 +131,15 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   async initialize(
     admin: PublicKey,
     decimals: UInt8,
-    mintConfig: MintConfig,
-    mintParams: MintParams,
-    burnConfig: BurnConfig,
-    burnParams: BurnParams,
-    mintDynamicProofConfig: MintDynamicProofConfig = MintDynamicProofConfig.default,
-    burnDynamicProofConfig: BurnDynamicProofConfig = BurnDynamicProofConfig.default,
-    transferDynamicProofConfig: TransferDynamicProofConfig = TransferDynamicProofConfig.default,
-    updatesDynamicProofConfig: UpdatesDynamicProofConfig = UpdatesDynamicProofConfig.default
+    mintDynamicProofConfig: MintDynamicProofConfig,
+    burnDynamicProofConfig: BurnDynamicProofConfig,
+    transferDynamicProofConfig: TransferDynamicProofConfig,
+    updatesDynamicProofConfig: UpdatesDynamicProofConfig
   ) {
     this.account.provedState.requireEquals(Bool(false));
 
     this.admin.set(admin);
     this.decimals.set(decimals);
-
-    mintConfig.validate();
-    burnConfig.validate();
-    this.packedAmountConfigs.set(
-      MintConfig.packConfigs([mintConfig, burnConfig])
-    );
-
-    mintParams.validate();
-    this.packedMintParams.set(mintParams.pack());
-
-    burnParams.validate();
-    this.packedBurnParams.set(burnParams.pack());
 
     this.packedDynamicProofConfigs.set(
       MintDynamicProofConfig.packConfigs([
@@ -308,6 +274,10 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       packedDynamicProofConfigs
     );
 
+    mintDynamicProofConfig.shouldVerify.assertTrue(
+      FungibleTokenErrors.proofMethodNotAllowed
+    );
+
     await this.verifySideLoadedProof(
       proof,
       vk,
@@ -317,7 +287,7 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       OperationKeys.Mint
     );
 
-    return await this.#internalMint(recipient, amount);
+    return await this.#internalMint(recipient, amount, Bool(false));
   }
 
   @method.returns(AccountUpdate)
@@ -331,25 +301,23 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       FungibleTokenErrors.noPermissionForSideloadDisabledOperation
     );
 
-    return await this.#internalMint(recipient, amount);
+    return await this.#internalMint(recipient, amount, Bool(true));
   }
 
   /**
    * Internal mint implementation shared by both mint() and mintWithProof().
    * Contains the core minting logic without proof verification.
+   * Conditionally requires admin signature based on the calling context.
    */
   async #internalMint(
     recipient: PublicKey,
-    amount: UInt64
+    amount: UInt64,
+    requireAdmin: Bool
   ): Promise<AccountUpdate> {
+    await this.ensureAdminSignature(requireAdmin);
+
     const accountUpdate = this.internal.mint({ address: recipient, amount });
     accountUpdate.body.useFullCommitment = Bool(true);
-
-    const packedMintParams = this.packedMintParams.getAndRequireEquals();
-    const mintParams = MintParams.unpack(packedMintParams);
-
-    const canMint = await this.canMint(accountUpdate, mintParams);
-    canMint.assertTrue(FungibleTokenErrors.noPermissionToMint);
 
     recipient
       .equals(this.address)
@@ -387,6 +355,10 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       packedDynamicProofConfigs
     );
 
+    burnDynamicProofConfig.shouldVerify.assertTrue(
+      FungibleTokenErrors.proofMethodNotAllowed
+    );
+
     await this.verifySideLoadedProof(
       proof,
       vk,
@@ -420,12 +392,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   async #internalBurn(from: PublicKey, amount: UInt64): Promise<AccountUpdate> {
     const accountUpdate = this.internal.burn({ address: from, amount });
     accountUpdate.body.useFullCommitment = Bool(true);
-
-    const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
-    const burnParams = BurnParams.unpack(packedBurnParams);
-
-    const canBurn = await this.canBurn(accountUpdate, burnParams);
-    canBurn.assertTrue(FungibleTokenErrors.noPermissionToBurn);
 
     const circulationUpdate = AccountUpdate.create(
       this.address,
@@ -603,6 +569,7 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     await this.approveBaseCustom(forest);
   }
 
+  @method
   async approveBaseCustom(updates: AccountUpdateForest): Promise<void> {
     const packedDynamicProofConfigs =
       this.packedDynamicProofConfigs.getAndRequireEquals();
@@ -703,87 +670,13 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   /**
    * Retrieves all current token configurations in packed form.
    * Caller can unpack off-chain using respective unpack methods.
-   * @returns Field array: [packedAmountConfigs, packedMintParams, packedBurnParams, packedDynamicProofConfigs]
+   * @returns Field array: [packedDynamicProofConfigs]
    */
   async getAllConfigs(): Promise<Field[]> {
-    const packedAmountConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const packedMintParams = this.packedMintParams.getAndRequireEquals();
-    const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
     const packedDynamicProofConfigs =
       this.packedDynamicProofConfigs.getAndRequireEquals();
 
-    return [
-      packedAmountConfigs,
-      packedMintParams,
-      packedBurnParams,
-      packedDynamicProofConfigs,
-    ];
-  }
-
-  @method
-  async updateMintConfig(mintConfig: MintConfig) {
-    //! maybe enforce that sender is admin instead of approving with an admin signature
-    this.ensureAdminSignature(Bool(true));
-    mintConfig.validate();
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    this.packedAmountConfigs.set(mintConfig.updatePackedConfigs(packedConfigs));
-
-    this.emitEvent(
-      'ConfigStructureUpdate',
-      new ConfigStructureUpdateEvent({
-        updateType: EventTypes.Config,
-        category: OperationKeys.Mint,
-      })
-    );
-  }
-
-  @method
-  async updateBurnConfig(burnConfig: BurnConfig) {
-    //! maybe enforce that sender is admin instead of approving with an admin signature
-    this.ensureAdminSignature(Bool(true));
-    burnConfig.validate();
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    this.packedAmountConfigs.set(burnConfig.updatePackedConfigs(packedConfigs));
-
-    this.emitEvent(
-      'ConfigStructureUpdate',
-      new ConfigStructureUpdateEvent({
-        updateType: EventTypes.Config,
-        category: OperationKeys.Burn,
-      })
-    );
-  }
-
-  @method
-  async updateMintParams(mintParams: MintParams) {
-    this.ensureAdminSignature(Bool(true));
-    mintParams.validate();
-
-    this.packedMintParams.set(mintParams.pack());
-
-    this.emitEvent(
-      'ConfigStructureUpdate',
-      new ConfigStructureUpdateEvent({
-        updateType: EventTypes.Params,
-        category: OperationKeys.Mint,
-      })
-    );
-  }
-
-  @method
-  async updateBurnParams(burnParams: BurnParams) {
-    this.ensureAdminSignature(Bool(true));
-    burnParams.validate();
-
-    this.packedBurnParams.set(burnParams.pack());
-
-    this.emitEvent(
-      'ConfigStructureUpdate',
-      new ConfigStructureUpdateEvent({
-        updateType: EventTypes.Params,
-        category: OperationKeys.Burn,
-      })
-    );
+    return [packedDynamicProofConfigs];
   }
 
   @method
@@ -868,60 +761,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   private async canChangeAdmin(_admin: PublicKey) {
     await this.ensureAdminSignature(Bool(true));
     return Bool(true);
-  }
-
-  /**
-   * Checks if admin signature is required and ensures it's provided when needed.
-   * @param config - The configuration containing unauthorized flag
-   */
-  private async requiresAdminSignature(config: { unauthorized: Bool }) {
-    await this.ensureAdminSignature(config.unauthorized.not());
-  }
-
-  /**
-   * Validates that the balance change amount meets the configured constraints.
-   * @param accountUpdate - The account update to validate
-   * @param params - The parameters containing fixedAmount, minAmount, maxAmount
-   * @param config - The configuration containing fixedAmount, rangedAmount flags
-   * @returns Boolean indicating if the amount is valid
-   */
-  private isValidBalanceChange(
-    accountUpdate: AccountUpdate,
-    params: { fixedAmount: UInt64; minAmount: UInt64; maxAmount: UInt64 },
-    config: { fixedAmount: Bool; rangedAmount: Bool }
-  ): Bool {
-    const { fixedAmount, minAmount, maxAmount } = params;
-    const magnitude = accountUpdate.body.balanceChange.magnitude;
-
-    const isFixed = magnitude.equals(fixedAmount);
-
-    const lowerBound = magnitude.greaterThanOrEqual(minAmount);
-    const upperBound = magnitude.lessThanOrEqual(maxAmount);
-    const isInRange = lowerBound.and(upperBound);
-
-    const canPerform = Provable.switch(
-      [config.fixedAmount, config.rangedAmount],
-      Bool,
-      [isFixed, isInRange]
-    );
-
-    return canPerform;
-  }
-
-  private async canMint(accountUpdate: AccountUpdate, mintParams: MintParams) {
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const mintConfig = MintConfig.unpack(packedConfigs);
-
-    await this.requiresAdminSignature(mintConfig);
-    return this.isValidBalanceChange(accountUpdate, mintParams, mintConfig);
-  }
-
-  private async canBurn(accountUpdate: AccountUpdate, burnParams: BurnParams) {
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-    const burnConfig = BurnConfig.unpack(packedConfigs);
-
-    await this.requiresAdminSignature(burnConfig);
-    return this.isValidBalanceChange(accountUpdate, burnParams, burnConfig);
   }
 
   private async verifySideLoadedProof(
@@ -1050,215 +889,6 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
 
     // Conditionally verify the provided side-loaded proof.
     proof.verifyIf(vk, shouldVerify);
-  }
-
-  @method
-  async updateAmountParameter(
-    operationType: Field,
-    parameterType: Field,
-    value: UInt64
-  ) {
-    this.ensureAdminSignature(Bool(true));
-
-    const isMint = operationType.equals(OperationKeys.Mint);
-    const isBurn = operationType.equals(OperationKeys.Burn);
-
-    // Ensure operationType is either Mint or Burn
-    isMint
-      .or(isBurn)
-      .assertTrue('Invalid operation type: must be Mint or Burn');
-
-    // Get packed params based on operation type
-    const packedMintParams = this.packedMintParams.getAndRequireEquals();
-    const packedBurnParams = this.packedBurnParams.getAndRequireEquals();
-
-    const packedParams = Provable.if(
-      isMint,
-      packedMintParams,
-      packedBurnParams
-    );
-
-    // Unpack params (both use same structure for `.unpack()`, extended from `AmountParams` object)
-    const params = MintParams.unpack(packedParams);
-
-    const isFixedAmount = parameterType.equals(ParameterTypes.FixedAmount);
-    const isMinAmount = parameterType.equals(ParameterTypes.MinAmount);
-    const isMaxAmount = parameterType.equals(ParameterTypes.MaxAmount);
-
-    // Ensure parameterType is valid
-    isFixedAmount
-      .or(isMinAmount)
-      .or(isMaxAmount)
-      .assertTrue(
-        'Invalid parameter type: must be FixedAmount, MinAmount, or MaxAmount'
-      );
-
-    const oldValue = Provable.switch(
-      [isFixedAmount, isMinAmount, isMaxAmount],
-      UInt64,
-      [params.fixedAmount, params.minAmount, params.maxAmount]
-    );
-
-    params.fixedAmount = Provable.if(isFixedAmount, value, params.fixedAmount);
-    params.minAmount = Provable.if(isMinAmount, value, params.minAmount);
-    params.maxAmount = Provable.if(isMaxAmount, value, params.maxAmount);
-
-    params.validate();
-
-    // Set packed params based on operation type
-    const newPackedParams = params.pack();
-    this.packedMintParams.set(
-      Provable.if(isMint, newPackedParams, packedMintParams)
-    );
-    this.packedBurnParams.set(
-      Provable.if(isBurn, newPackedParams, packedBurnParams)
-    );
-
-    this.emitEvent(
-      'AmountValueUpdate',
-      new AmountValueUpdateEvent({
-        parameterType,
-        category: operationType,
-        oldValue,
-        newValue: value,
-      })
-    );
-  }
-
-  @method
-  async updateConfigFlag(operationType: Field, flagType: Field, value: Bool) {
-    this.ensureAdminSignature(Bool(true));
-    const packedConfigs = this.packedAmountConfigs.getAndRequireEquals();
-
-    const isMint = operationType.equals(OperationKeys.Mint);
-    const isBurn = operationType.equals(OperationKeys.Burn);
-
-    // Ensure operationType is either Mint or Burn
-    isMint
-      .or(isBurn)
-      .assertTrue('Invalid operation type: must be Mint or Burn');
-
-    const isFixedAmount = flagType.equals(FlagTypes.FixedAmount);
-    const isRangedAmount = flagType.equals(FlagTypes.RangedAmount);
-    const isUnauthorized = flagType.equals(FlagTypes.Unauthorized);
-
-    // Ensure flagType is valid
-    isFixedAmount
-      .or(isRangedAmount)
-      .or(isUnauthorized)
-      .assertTrue(
-        'Invalid flag type: must be FixedAmount, RangedAmount, or Unauthorized'
-      );
-
-    // Get the bits for both configs
-    const allBits = packedConfigs.toBits(6);
-    const mintBits = allBits.slice(0, 3);
-    const burnBits = allBits.slice(3, 6);
-
-    // Get the config we're updating based on operation type
-    const configBits = [
-      Provable.if(isMint, mintBits[0], burnBits[0]),
-      Provable.if(isMint, mintBits[1], burnBits[1]),
-      Provable.if(isMint, mintBits[2], burnBits[2]),
-    ];
-    const [unauthorized, fixedAmount, rangedAmount] = configBits;
-
-    // Store original values
-    const originalFixedAmount = fixedAmount;
-    const originalRangedAmount = rangedAmount;
-    const originalUnauthorized = unauthorized;
-
-    // Update the specified flag
-    const newFixedAmount = Provable.if(
-      isFixedAmount,
-      value,
-      originalFixedAmount
-    );
-    const newRangedAmount = Provable.if(
-      isRangedAmount,
-      value,
-      originalRangedAmount
-    );
-    const newUnauthorized = Provable.if(
-      isUnauthorized,
-      value,
-      originalUnauthorized
-    );
-
-    // Handle mutual exclusivity for fixed/ranged amount
-    const finalFixedAmount = Provable.if(
-      isRangedAmount,
-      value.not(),
-      newFixedAmount
-    );
-    const finalRangedAmount = Provable.if(
-      isFixedAmount,
-      value.not(),
-      newRangedAmount
-    );
-
-    // Create new config bits
-    const updatedConfigBits = [
-      newUnauthorized,
-      finalFixedAmount,
-      finalRangedAmount,
-    ];
-
-    // Update the packed configs based on operation type
-    const updatedPackedConfigs = Field.fromBits([
-      Provable.if(isMint, updatedConfigBits[0], mintBits[0]),
-      Provable.if(isMint, updatedConfigBits[1], mintBits[1]),
-      Provable.if(isMint, updatedConfigBits[2], mintBits[2]),
-      Provable.if(isBurn, updatedConfigBits[0], burnBits[0]),
-      Provable.if(isBurn, updatedConfigBits[1], burnBits[1]),
-      Provable.if(isBurn, updatedConfigBits[2], burnBits[2]),
-    ]);
-
-    this.packedAmountConfigs.set(updatedPackedConfigs);
-
-    // Emit an event only for flags that actually changed
-    const fixedAmountChanged = finalFixedAmount
-      .equals(originalFixedAmount)
-      .not();
-    const rangedAmountChanged = finalRangedAmount
-      .equals(originalRangedAmount)
-      .not();
-    const unauthorizedChanged = newUnauthorized
-      .equals(originalUnauthorized)
-      .not();
-
-    this.emitEventIf(
-      fixedAmountChanged,
-      'ConfigFlagUpdate',
-      new ConfigFlagUpdateEvent({
-        flagType: FlagTypes.FixedAmount,
-        category: operationType,
-        oldValue: originalFixedAmount,
-        newValue: finalFixedAmount,
-      })
-    );
-
-    this.emitEventIf(
-      rangedAmountChanged,
-      'ConfigFlagUpdate',
-      new ConfigFlagUpdateEvent({
-        flagType: FlagTypes.RangedAmount,
-        category: operationType,
-        oldValue: originalRangedAmount,
-        newValue: finalRangedAmount,
-      })
-    );
-
-    this.emitEventIf(
-      unauthorizedChanged,
-      'ConfigFlagUpdate',
-      new ConfigFlagUpdateEvent({
-        flagType: FlagTypes.Unauthorized,
-        category: operationType,
-        oldValue: originalUnauthorized,
-        newValue: newUnauthorized,
-      })
-    );
   }
 }
 

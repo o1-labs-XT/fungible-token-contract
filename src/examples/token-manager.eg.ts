@@ -21,18 +21,10 @@ import {
   PrivateKey,
   UInt8,
 } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
+import { FungibleToken } from '../FungibleTokenContract.js';
 import {
-  generateDummyDynamicProof,
-  SideloadedProof,
-} from './side-loaded/program.eg.js';
-import {
-  BurnConfig,
   BurnDynamicProofConfig,
-  BurnParams,
-  MintConfig,
   MintDynamicProofConfig,
-  MintParams,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
 } from '../lib/configs.js';
@@ -187,18 +179,10 @@ const deployTx = await Mina.transaction(
     await tokenContract.initialize(
       managerContractAddress,
       UInt8.from(9),
-      MintConfig.default,
-      new MintParams({
-        fixedAmount: UInt64.from(100),
-        minAmount: UInt64.from(20),
-        maxAmount: UInt64.MAXINT(),
-      }),
-      BurnConfig.default,
-      new BurnParams({
-        fixedAmount: UInt64.from(100),
-        minAmount: UInt64.from(20),
-        maxAmount: UInt64.MAXINT(),
-      })
+      MintDynamicProofConfig.default,
+      BurnDynamicProofConfig.default,
+      TransferDynamicProofConfig.default,
+      UpdatesDynamicProofConfig.default
     );
   }
 );
