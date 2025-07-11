@@ -3,7 +3,6 @@ import {
   AccountUpdateForest,
   assert,
   Bool,
-  DeployArgs,
   Field,
   Int64,
   method,
@@ -12,7 +11,6 @@ import {
   PublicKey,
   State,
   state,
-  Struct,
   TokenContract,
   Types,
   UInt64,
@@ -58,7 +56,7 @@ import {
 export {
   FungibleToken,
   VKeyMerkleMap,
-  // Re-export all events from events.js
+  // Re-export all events from lib/events.js
   SetAdminEvent,
   MintEvent,
   BurnEvent,
@@ -68,7 +66,7 @@ export {
   VerificationKeyUpdateEvent,
   SideLoadedVKeyUpdateEvent,
   DynamicProofConfigUpdateEvent,
-  // Re-export errors from errors.js
+  // Re-export errors from lib/errors.js
   FungibleTokenErrors,
 };
 
@@ -571,6 +569,7 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
     await this.approveBaseCustom(forest);
   }
 
+  @method
   async approveBaseCustom(updates: AccountUpdateForest): Promise<void> {
     const packedDynamicProofConfigs =
       this.packedDynamicProofConfigs.getAndRequireEquals();

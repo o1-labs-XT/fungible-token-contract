@@ -73,42 +73,10 @@ export class SideLoadedVKeyUpdateEvent extends Struct({
   newMerkleRoot: Field,
 }) {}
 
-// =============================================================================
-// CONFIGURATION EVENT CLASSES
-// =============================================================================
-
-/**
- * Event emitted when configuration structure is updated.
- */
-export class ConfigStructureUpdateEvent extends Struct({
-  updateType: Field, // EventTypes.Config or EventTypes.Params
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-}) {}
-
-/**
- * Event emitted when amount parameters are updated.
- */
-export class AmountValueUpdateEvent extends Struct({
-  parameterType: Field, // ParameterTypes.FixedAmount, MinAmount, or MaxAmount
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-  oldValue: UInt64,
-  newValue: UInt64,
-}) {}
-
 /**
  * Event emitted when dynamic proof configuration is updated.
  */
 export class DynamicProofConfigUpdateEvent extends Struct({
   operationType: Field, // OperationKeys.Mint, Burn, Transfer, or ApproveBase
   newConfig: Field, // The updated packed configuration
-}) {}
-
-/**
- * Event emitted when configuration flags are updated.
- */
-export class ConfigFlagUpdateEvent extends Struct({
-  flagType: Field, // FlagTypes.FixedAmount, RangedAmount, or Unauthorized
-  category: Field, // OperationKeys.Mint or OperationKeys.Burn
-  oldValue: Bool,
-  newValue: Bool,
 }) {}

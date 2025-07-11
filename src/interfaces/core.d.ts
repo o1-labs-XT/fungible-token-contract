@@ -67,7 +67,7 @@ export interface Core {
    * @returns The account update for the mint operation
    * @throws {Error} If dynamic proof verification is enabled in the mint configuration
    * @throws {Error} If the recipient is the circulation account
-   * @throws {Error} If the minting operation is not authorized
+   * @throws {Error} If the transaction is not signed by the admin
    */
   mint(recipient: PublicKey, amount: UInt64): Promise<AccountUpdate>;
 
@@ -80,7 +80,7 @@ export interface Core {
    * @returns The account update for the burn operation
    * @throws {Error} If dynamic proof verification is enabled in the burn configuration
    * @throws {Error} If the from account is the circulation account
-   * @throws {Error} If the burning operation is not authorized
+   * @throws {Error} If the transaction is not signed by the token holder
    */
   burn(from: PublicKey, amount: UInt64): Promise<AccountUpdate>;
 
@@ -101,10 +101,6 @@ export interface Core {
    * This function can only be used when dynamic proof verification is disabled in the updates configuration.
    *
    * @param accountUpdate - The account update to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If the update involves the circulation account
-   * @throws {Error} If the update would result in flash minting
-   * @throws {Error} If the update would result in an unbalanced transaction
    */
   approveAccountUpdateCustom(
     accountUpdate: AccountUpdate | AccountUpdateTree
@@ -115,10 +111,6 @@ export interface Core {
    * This function can only be used when dynamic proof verification is disabled in the updates configuration.
    *
    * @param accountUpdates - The account updates to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If any update involves the circulation account
-   * @throws {Error} If the updates would result in flash minting
-   * @throws {Error} If the updates would result in an unbalanced transaction
    */
   approveAccountUpdatesCustom(
     accountUpdates: (AccountUpdate | AccountUpdateTree)[]
@@ -129,10 +121,6 @@ export interface Core {
    * This function can only be used when dynamic proof verification is disabled in the updates configuration.
    *
    * @param updates - The forest of account updates to approve
-   * @throws {Error} If dynamic proof verification is enabled in the updates configuration
-   * @throws {Error} If any update involves the circulation account
-   * @throws {Error} If the updates would result in flash minting
-   * @throws {Error} If the updates would result in an unbalanced transaction
    */
   approveBaseCustom(updates: AccountUpdateForest): Promise<void>;
 
