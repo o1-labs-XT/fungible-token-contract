@@ -1,0 +1,45 @@
+#
+# This workflow will publish the package to NPM when changes are pushed to main and the version is updated.
+#
+
+name: Publish to NPM
+permissions:
+  id-token: write
+  contents: read
+on:
+  workflow_run:
+    workflows: ["zkApp tests"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch: {}
+jobs:
+  publish-to-npm:
+ # Only run if the tests workflow succeeded or this was manually triggered
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20]
+    steps:
+      - name: Set up NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          registry-url: 'https://registry.npmjs.org'
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: NPM ci & build
+        run: |
+          npm ci
+          npm run build --if-present
+      - name: Publish to NPM if version has changed
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          strategy: upgrade
+          provenance: true
+          access: public 
+        env:
+          INPUT_TOKEN: ${{ secrets.NPM_TOKEN }}
