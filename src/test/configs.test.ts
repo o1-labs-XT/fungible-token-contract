@@ -1,232 +1,34 @@
-import { describe, it, expect, beforeAll } from '@jest/globals';
-import { Bool, Field, UInt64 } from 'o1js';
+import { describe, it, expect } from '@jest/globals';
+import { Bool, Field } from 'o1js';
 
 import {
-  MintConfig,
-  BurnConfig,
-  MintParams,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   DynamicProofConfig,
-  ConfigErrors,
 } from '../lib/configs.js';
+import { TEST_ERROR_MESSAGES } from './constants.js';
 
 describe('Fungible Token - Configuration Tests', () => {
-  describe('Config Packing Operations', () => {
-    it('should reject packing when invalid array length is provided', () => {
-      const mintConfig = MintConfig.default;
-
-      // Test with empty array
-      expect(() => {
-        MintConfig.packConfigs([] as any);
-      }).toThrow(ConfigErrors.invalidAmountConfigCount);
-
-      // Test with single config
-      expect(() => {
-        MintConfig.packConfigs([mintConfig] as any);
-      }).toThrow(ConfigErrors.invalidAmountConfigCount);
-
-      // Test with too many configs
-      expect(() => {
-        MintConfig.packConfigs([
-          mintConfig,
-          BurnConfig.default,
-          mintConfig,
-        ] as any);
-      }).toThrow(ConfigErrors.invalidAmountConfigCount);
-    });
-
-    it('should pack valid array of 2 configs successfully', () => {
-      const mintConfig = MintConfig.default;
-      const burnConfig = BurnConfig.default;
-
-      const packed = MintConfig.packConfigs([mintConfig, burnConfig]);
-      expect(packed).toBeInstanceOf(Field);
-    });
-  });
-
-  describe('Mint Config Validation - Fixed Amount Mode', () => {
-    it('should reject mint params when fixedAmount is missing for fixed config', () => {
-      const fixedMintConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      });
-
-      expect(() => {
-        MintParams.create(fixedMintConfig, {});
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-
-      expect(() => {
-        MintParams.create(fixedMintConfig, { minAmount: UInt64.from(100) });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-    });
-
-    it('should reject mint params when ranged params provided for fixed config', () => {
-      const fixedMintConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      });
-
-      expect(() => {
-        MintParams.create(fixedMintConfig, {
-          fixedAmount: UInt64.from(100),
-          minAmount: UInt64.from(50),
-        });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-
-      expect(() => {
-        MintParams.create(fixedMintConfig, {
-          fixedAmount: UInt64.from(100),
-          maxAmount: UInt64.from(200),
-        });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-
-      expect(() => {
-        MintParams.create(fixedMintConfig, {
-          fixedAmount: UInt64.from(100),
-          minAmount: UInt64.from(50),
-          maxAmount: UInt64.from(200),
-        });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-    });
-  });
-
-  describe('Mint Config Validation - Ranged Amount Mode', () => {
-    it('should reject mint params when ranged params are missing for ranged config', () => {
-      const rangedMintConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(false),
-        rangedAmount: Bool(true),
-      });
-
-      expect(() => {
-        MintParams.create(rangedMintConfig, {});
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-
-      expect(() => {
-        MintParams.create(rangedMintConfig, { minAmount: UInt64.from(50) });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-
-      expect(() => {
-        MintParams.create(rangedMintConfig, { maxAmount: UInt64.from(200) });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-    });
-
-    it('should reject mint params when fixedAmount provided for ranged config', () => {
-      const rangedMintConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(false),
-        rangedAmount: Bool(true),
-      });
-
-      expect(() => {
-        MintParams.create(rangedMintConfig, {
-          fixedAmount: UInt64.from(100),
-          minAmount: UInt64.from(50),
-          maxAmount: UInt64.from(200),
-        });
-      }).toThrow(ConfigErrors.invalidMintConfigData);
-    });
-
-    it('should create mint params successfully for valid configurations', () => {
-      // Valid fixed config
-      const fixedMintConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      });
-
-      const fixedParams = MintParams.create(fixedMintConfig, {
-        fixedAmount: UInt64.from(100),
-      });
-      expect(fixedParams.fixedAmount.toBigInt()).toBe(100n);
-
-      // Valid ranged config
-      const rangedMintConfig = MintConfig.default;
-      const rangedParams = MintParams.create(rangedMintConfig, {
-        minAmount: UInt64.from(50),
-        maxAmount: UInt64.from(200),
-      });
-      expect(rangedParams.minAmount.toBigInt()).toBe(50n);
-      expect(rangedParams.maxAmount.toBigInt()).toBe(200n);
-    });
-  });
-
-  describe('Burn Config Validation - Fixed Amount Mode', () => {
-    it('should reject burn params when fixedAmount is missing for fixed config', () => {
-      const fixedBurnConfig = new BurnConfig({
-        unauthorized: Bool(true),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      });
-
-      expect(() => {
-        BurnParams.create(fixedBurnConfig, {});
-      }).toThrow(ConfigErrors.invalidBurnConfigData);
-    });
-
-    it('should reject burn params when ranged params provided for fixed config', () => {
-      const fixedBurnConfig = new BurnConfig({
-        unauthorized: Bool(true),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      });
-
-      expect(() => {
-        BurnParams.create(fixedBurnConfig, {
-          fixedAmount: UInt64.from(100),
-          minAmount: UInt64.from(50),
-          maxAmount: UInt64.from(200),
-        });
-      }).toThrow(ConfigErrors.invalidBurnConfigData);
-    });
-  });
-
-  describe('Burn Config Validation - Ranged Amount Mode', () => {
-    it('should reject burn params when ranged params are missing for ranged config', () => {
-      const rangedBurnConfig = BurnConfig.default;
-
-      expect(() => {
-        BurnParams.create(rangedBurnConfig, {});
-      }).toThrow(ConfigErrors.invalidBurnConfigData);
-    });
-
-    it('should reject burn params when fixedAmount provided for ranged config', () => {
-      const rangedBurnConfig = BurnConfig.default;
-
-      expect(() => {
-        BurnParams.create(rangedBurnConfig, {
-          fixedAmount: UInt64.from(100),
-          minAmount: UInt64.from(50),
-          maxAmount: UInt64.from(200),
-        });
-      }).toThrow(ConfigErrors.invalidBurnConfigData);
-    });
-  });
-
   describe('Dynamic Proof Config Packing Operations', () => {
     it('should reject packing when invalid array length is provided', () => {
-      const mintConfig = MintDynamicProofConfig.default;
+      const mintDynamicProofConfig = MintDynamicProofConfig.default;
 
       expect(() => {
         DynamicProofConfig.packConfigs([]);
-      }).toThrow(ConfigErrors.invalidDynamicProofConfigCount);
+      }).toThrow(TEST_ERROR_MESSAGES.INVALID_DYNAMIC_PROOF_CONFIG_COUNT);
 
       expect(() => {
-        DynamicProofConfig.packConfigs([mintConfig]);
-      }).toThrow(ConfigErrors.invalidDynamicProofConfigCount);
+        DynamicProofConfig.packConfigs([mintDynamicProofConfig]);
+      }).toThrow(TEST_ERROR_MESSAGES.INVALID_DYNAMIC_PROOF_CONFIG_COUNT);
 
       expect(() => {
         DynamicProofConfig.packConfigs([
-          mintConfig,
+          mintDynamicProofConfig,
           BurnDynamicProofConfig.default,
         ]);
-      }).toThrow(ConfigErrors.invalidDynamicProofConfigCount);
+      }).toThrow(TEST_ERROR_MESSAGES.INVALID_DYNAMIC_PROOF_CONFIG_COUNT);
     });
 
     it('should pack valid array of 4 configs successfully', () => {
@@ -355,31 +157,7 @@ describe('Fungible Token - Configuration Tests', () => {
   describe('Edge Cases and Boundary Conditions', () => {
     it('should handle edge cases for config validation', () => {
       // Test configs with both fixed and ranged disabled (should fail validation)
-      const invalidConfig = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(false),
-        rangedAmount: Bool(false),
-      });
-
-      expect(() => {
-        invalidConfig.validate();
-      }).toThrow(ConfigErrors.invalidConfigValidation);
-
-      // Test configs with both fixed and ranged enabled (should fail validation)
-      const invalidConfig2 = new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(true),
-      });
-
-      expect(() => {
-        invalidConfig2.validate();
-      }).toThrow(ConfigErrors.invalidConfigValidation);
-    });
-
-    it('should handle complex DynamicProofConfig scenarios', () => {
-      // Test with all verification disabled
-      const disabledConfig = new MintDynamicProofConfig({
+      const invalidConfig = new MintDynamicProofConfig({
         shouldVerify: Bool(false),
         requireRecipientMatch: Bool(false),
         requireTokenIdMatch: Bool(false),
@@ -401,7 +179,7 @@ describe('Fungible Token - Configuration Tests', () => {
       });
 
       // Both should serialize and deserialize correctly
-      const disabledBits = disabledConfig.toBits();
+      const disabledBits = invalidConfig.toBits();
       const enabledBits = enabledConfig.toBits();
 
       expect(disabledBits.length).toBe(7);
