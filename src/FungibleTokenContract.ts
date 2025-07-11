@@ -131,10 +131,10 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
   async initialize(
     admin: PublicKey,
     decimals: UInt8,
-    mintDynamicProofConfig: MintDynamicProofConfig = MintDynamicProofConfig.default,
-    burnDynamicProofConfig: BurnDynamicProofConfig = BurnDynamicProofConfig.default,
-    transferDynamicProofConfig: TransferDynamicProofConfig = TransferDynamicProofConfig.default,
-    updatesDynamicProofConfig: UpdatesDynamicProofConfig = UpdatesDynamicProofConfig.default
+    mintDynamicProofConfig: MintDynamicProofConfig,
+    burnDynamicProofConfig: BurnDynamicProofConfig,
+    transferDynamicProofConfig: TransferDynamicProofConfig,
+    updatesDynamicProofConfig: UpdatesDynamicProofConfig
   ) {
     this.account.provedState.requireEquals(Bool(false));
 
