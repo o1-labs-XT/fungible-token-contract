@@ -276,6 +276,10 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       packedDynamicProofConfigs
     );
 
+    mintDynamicProofConfig.shouldVerify.assertTrue(
+      FungibleTokenErrors.proofMethodNotAllowed
+    );
+
     await this.verifySideLoadedProof(
       proof,
       vk,
@@ -285,7 +289,7 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       OperationKeys.Mint
     );
 
-    return await this.#internalMint(recipient, amount);
+    return await this.#internalMint(recipient, amount, Bool(false));
   }
 
   @method.returns(AccountUpdate)
@@ -299,19 +303,20 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       FungibleTokenErrors.noPermissionForSideloadDisabledOperation
     );
 
-    return await this.#internalMint(recipient, amount);
+    return await this.#internalMint(recipient, amount, Bool(true));
   }
 
   /**
    * Internal mint implementation shared by both mint() and mintWithProof().
    * Contains the core minting logic without proof verification.
-   * Always requires admin signature for minting.
+   * Conditionally requires admin signature based on the calling context.
    */
   async #internalMint(
     recipient: PublicKey,
-    amount: UInt64
+    amount: UInt64,
+    requireAdmin: Bool
   ): Promise<AccountUpdate> {
-    await this.ensureAdminSignature(Bool(true));
+    await this.ensureAdminSignature(requireAdmin);
 
     const accountUpdate = this.internal.mint({ address: recipient, amount });
     accountUpdate.body.useFullCommitment = Bool(true);
@@ -350,6 +355,10 @@ class FungibleToken extends TokenContract implements Admin, Sideloaded, Core {
       this.packedDynamicProofConfigs.getAndRequireEquals();
     const burnDynamicProofConfig = BurnDynamicProofConfig.unpack(
       packedDynamicProofConfigs
+    );
+
+    burnDynamicProofConfig.shouldVerify.assertTrue(
+      FungibleTokenErrors.proofMethodNotAllowed
     );
 
     await this.verifySideLoadedProof(

@@ -32,6 +32,10 @@ export const FungibleTokenErrors = {
   noPermissionForSideloadDisabledOperation:
     "Can't use the method, side-loading is enabled in config",
 
+  /** Error when trying to use sideload-enabled method while sideloading is disabled */
+  proofMethodNotAllowed:
+    "Can't use proof-based method, side-loading is disabled in config",
+
   /** Error when trying to transfer to/from circulation tracking account */
   noTransferFromCirculation:
     'Invalid operation: Cannot transfer to/from circulation tracking account',
