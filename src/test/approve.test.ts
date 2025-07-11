@@ -349,7 +349,6 @@ describe('Fungible Token - ApproveBase Tests', () => {
         tokenContract.deriveTokenId()
       );
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
-      updateReceive;
       const approveAccountUpdatesTx = async () => {
         const tx = await Mina.transaction(
           {
@@ -553,7 +552,6 @@ describe('Fungible Token - ApproveBase Tests', () => {
         tokenContract.deriveTokenId()
       );
       updateReceive.balanceChange = Int64.fromUnsigned(sendAmount);
-      updateReceive;
       const approveAccountUpdatesTx = async () => {
         const tx = await Mina.transaction(
           {
