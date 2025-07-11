@@ -1,4 +1,3 @@
-import { equal } from 'node:assert';
 import {
   AccountUpdate,
   Bool,
@@ -9,23 +8,20 @@ import {
   UInt64,
   UInt8,
 } from 'o1js';
-import { FungibleToken, VKeyMerkleMap } from '../FungibleTokenContract.js';
+import { FungibleToken, VKeyMerkleMap } from '../../FungibleTokenContract.js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   OperationKeys,
-} from '../configs.js';
+} from '../../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,
   generateDynamicProof,
 } from './program.eg.js';
+import { equal } from 'node:assert';
 
 // const cs = await FungibleToken.analyzeMethods();
 // console.log(cs);
@@ -43,24 +39,15 @@ const admin = PrivateKey.randomKeypair();
 
 const token = new FungibleToken(contract.publicKey);
 
-// 4185797382523560386307881027368447066967585209309211872358080091069402725399
+// 12800910255450806834975875519572639880416673093669308232354796170216338751368
 const scVkey = (await FungibleToken.compile()).verificationKey;
 Provable.log('FTS verification key: ', scVkey.hash);
 
-// 28601859585317876844971055556684855811670354347630700621724962653324656992162
+// 27958865674412849921523613302016012068423073639706522502732331588825388577025
 const vKey = (await program.compile()).verificationKey;
 Provable.log('Program verification key: ', vKey.hash);
 
 let vKeyMap = new VKeyMerkleMap();
-
-const mintParams = MintParams.create(MintConfig.default, {
-  minAmount: UInt64.from(0),
-  maxAmount: UInt64.from(1000),
-});
-const burnParams = BurnParams.create(BurnConfig.default, {
-  minAmount: UInt64.from(100),
-  maxAmount: UInt64.from(1500),
-});
 
 // ----------------------- DEPLOY --------------------------------
 console.log('Deploying token contract.');
@@ -78,10 +65,6 @@ const deployTx = await Mina.transaction(
     await token.initialize(
       admin.publicKey,
       UInt8.from(9),
-      MintConfig.default,
-      mintParams,
-      BurnConfig.default,
-      burnParams,
       MintDynamicProofConfig.default,
       BurnDynamicProofConfig.default,
       TransferDynamicProofConfig.default,
@@ -102,7 +85,7 @@ const dynamicDummyProof = await generateDummyDynamicProof(
   alexa
 );
 
-// ----------------------- MINT IN RANGE::AUTHORIZED::ALEXA --------------------------------
+// ----------------------- MINT AUTHORIZED::ALEXA --------------------------------
 const alexaBalanceBeforeMint = (await token.getBalanceOf(alexa)).toBigInt();
 console.log('Alexa balance before mint:', alexaBalanceBeforeMint);
 equal(alexaBalanceBeforeMint, 0n);
@@ -116,13 +99,7 @@ const mintTx = await Mina.transaction(
   async () => {
     AccountUpdate.fundNewAccount(owner, 2);
     Provable.log('mina token id: ', AccountUpdate.default(owner).tokenId);
-    await token.mintWithProof(
-      alexa,
-      new UInt64(300),
-      dynamicDummyProof,
-      vKey,
-      vKeyMap
-    );
+    await token.mint(alexa, new UInt64(300));
   }
 );
 // console.log(mintTx.toPretty().length, mintTx.toPretty());
@@ -139,29 +116,6 @@ const alexaBalanceAfterMint = (await token.getBalanceOf(alexa)).toBigInt();
 console.log('Alexa balance after mint:', alexaBalanceAfterMint);
 equal(alexaBalanceAfterMint, 300n);
 
-// ----------------------- UPDATE MINT CONFIG::AUTHORIZED::FIXED::VERIFY --------------------------------
-console.log('updating the mint config...');
-const updateMintConfigTx = await Mina.transaction(
-  {
-    sender: alexa,
-    fee,
-  },
-  async () => {
-    await token.updateMintConfig(
-      new MintConfig({
-        unauthorized: Bool(false),
-        fixedAmount: Bool(true),
-        rangedAmount: Bool(false),
-      })
-    );
-  }
-);
-await updateMintConfigTx.prove();
-await updateMintConfigTx.sign([alexa.key, admin.privateKey]).send().wait();
-console.log(
-  updateMintConfigTx.toPretty().length,
-  updateMintConfigTx.toPretty()
-);
 // ----------------------- UPDATE DYNAMIC PROOF CONFIG ----------------------------
 let mintDynamicProofConfig = MintDynamicProofConfig.default;
 mintDynamicProofConfig.shouldVerify = Bool(true);
@@ -200,7 +154,7 @@ vKeyMap.set(Field(1), vKey.hash);
 
 const dynamicProof = await generateDynamicProof(token.deriveTokenId(), alexa);
 
-// ----------------------- MINT IN RANGE::AUTHORIZED::ALEXA::VKEY --------------------------------
+// ----------------------- MINT ALEXA::VKEY --------------------------------
 
 const alexaBalanceBeforeMint2 = (await token.getBalanceOf(alexa)).toBigInt();
 console.log('Alexa balance before mint2:', alexaBalanceBeforeMint2);
@@ -224,7 +178,7 @@ const mintTx2 = await Mina.transaction(
 );
 // console.log(mintTx.toPretty().length, mintTx.toPretty());
 await mintTx2.prove();
-mintTx2.sign([alexa.key, admin.privateKey]);
+mintTx2.sign([alexa.key]);
 const mintTxResult2 = await mintTx2.send().then((v) => v.wait());
 console.log(
   'Mint tx result:',
@@ -236,8 +190,7 @@ const alexaBalanceAfterMint2 = (await token.getBalanceOf(alexa)).toBigInt();
 console.log('Alexa balance after mint2:', alexaBalanceAfterMint2);
 equal(alexaBalanceAfterMint2, 500n);
 
-// ----------------------- UPDATE DYNAMIC PROOF CONFIG::AUTHORIZED
-//                         ::IGNORE::{requireMinaBalanceMatch, requireCustomTokenBalanceMatch, requireMinaNonceMatch} --------------------------------
+// ----------------------- UPDATE DYNAMIC PROOF CONFIG::AUTHORIZED::IGNORE::{requireMinaBalanceMatch, requireCustomTokenBalanceMatch, requireMinaNonceMatch} --------------------------------
 const flexibleDynamicProofConfig = new MintDynamicProofConfig({
   shouldVerify: Bool(true),
   requireRecipientMatch: Bool(true),
@@ -271,7 +224,7 @@ console.log(
   updateDynamicProofConfigTx.toPretty()
 );
 
-// ----------------------- MINT IN RANGE::AUTHORIZED::ALEXA::VKEY::IGNORE BALANCE/NONCE --------------------------------
+// ----------------------- MINT ALEXA::VKEY::IGNORE BALANCE/NONCE --------------------------------
 const alexaBalanceBeforeMint3 = (await token.getBalanceOf(alexa)).toBigInt();
 console.log('Alexa balance before mint3:', alexaBalanceBeforeMint3);
 equal(alexaBalanceBeforeMint3, 500n);
@@ -296,7 +249,7 @@ const mintTx3 = await Mina.transaction(
 );
 // console.log(mintTx.toPretty().length, mintTx.toPretty());
 await mintTx3.prove();
-mintTx3.sign([owner.key, admin.privateKey]);
+mintTx3.sign([owner.key]);
 const mintTxResult3 = await mintTx3.send().then((v) => v.wait());
 console.log(
   'Mint tx result:',

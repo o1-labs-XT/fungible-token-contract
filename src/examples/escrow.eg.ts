@@ -1,4 +1,3 @@
-import { equal } from 'node:assert';
 import {
   AccountUpdate,
   Bool,
@@ -14,17 +13,14 @@ import {
   UInt64,
   UInt8,
 } from 'o1js';
+import { FungibleToken } from '../FungibleTokenContract.js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
-import { FungibleToken } from '../FungibleTokenContract.js';
+} from '../lib/configs.js';
+import { equal } from 'node:assert';
 
 export class TokenEscrow extends SmartContract {
   @state(PublicKey)
@@ -103,15 +99,6 @@ TokenContract Public Key: ${tokenContractKeyPair.publicKey.toBase58()}
 EscrowContract Public Key: ${escrowContractKeyPair.publicKey.toBase58()}
 `);
 
-const mintParams = MintParams.create(MintConfig.default, {
-  minAmount: UInt64.from(1),
-  maxAmount: UInt64.from(1000),
-});
-const burnParams = BurnParams.create(BurnConfig.default, {
-  minAmount: UInt64.from(100),
-  maxAmount: UInt64.from(1500),
-});
-
 const tokenContract = new FungibleToken(tokenContractKeyPair.publicKey);
 const escrowContract = new TokenEscrow(escrowContractKeyPair.publicKey);
 
@@ -136,10 +123,6 @@ const deployTx = await Mina.transaction(
     await tokenContract.initialize(
       deployer,
       UInt8.from(9),
-      MintConfig.default,
-      mintParams,
-      BurnConfig.default,
-      burnParams,
       MintDynamicProofConfig.default,
       BurnDynamicProofConfig.default,
       TransferDynamicProofConfig.default,
@@ -187,7 +170,7 @@ const mintAlexaTx = await Mina.transaction(
   { sender: deployer, fee },
   async () => {
     AccountUpdate.fundNewAccount(deployer, 1);
-    await tokenContract.mint(alexa, mintParams.maxAmount);
+    await tokenContract.mint(alexa, UInt64.from(1000));
   }
 );
 await mintAlexaTx.prove();
@@ -201,7 +184,7 @@ const mintBillyTx = await Mina.transaction(
   { sender: deployer, fee },
   async () => {
     AccountUpdate.fundNewAccount(deployer, 1);
-    await tokenContract.mint(billy, mintParams.maxAmount);
+    await tokenContract.mint(billy, UInt64.from(1000));
   }
 );
 await mintBillyTx.prove();

@@ -15,16 +15,12 @@ import {
   VKeyMerkleMap,
 } from '../FungibleTokenContract.js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
   OperationKeys,
-} from '../configs.js';
+} from '../lib/configs.js';
 import {
   program,
   generateDummyDynamicProof,
@@ -32,7 +28,7 @@ import {
   generateDynamicProof2,
   SideloadedProof,
   program2,
-} from '../side-loaded/program.eg.js';
+} from '../examples/side-loaded/program.eg.js';
 import { TEST_ERROR_MESSAGES } from './constants.js';
 
 const proofsEnabled = false;
@@ -42,8 +38,6 @@ describe('Fungible Token - Transfer Tests', () => {
 
   let fee: number,
     tokenContract: FungibleToken,
-    mintParams: MintParams,
-    burnParams: BurnParams,
     vKeyMap: VKeyMerkleMap,
     dummyVkey: VerificationKey,
     dummyProof: SideloadedProof,
@@ -70,16 +64,6 @@ describe('Fungible Token - Transfer Tests', () => {
     [deployer, user1, user2, user3] = localChain.testAccounts;
     tokenContract = new FungibleToken(tokenA);
 
-    mintParams = MintParams.create(MintConfig.default, {
-      minAmount: UInt64.from(0),
-      maxAmount: UInt64.from(1000),
-    });
-
-    burnParams = BurnParams.create(BurnConfig.default, {
-      minAmount: UInt64.from(50),
-      maxAmount: UInt64.from(500),
-    });
-
     vKeyMap = new VKeyMerkleMap();
     dummyVkey = await VerificationKey.dummy();
     dummyProof = await generateDummyDynamicProof(
@@ -103,14 +87,7 @@ describe('Fungible Token - Transfer Tests', () => {
       const receiverBalanceBefore = await tokenContract.getBalanceOf(receiver);
       const tx = await Mina.transaction({ sender, fee }, async () => {
         AccountUpdate.fundNewAccount(sender, numberOfAccounts);
-        await tokenContract.transferCustomWithProof(
-          sender,
-          receiver,
-          transferAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
+        await tokenContract.transferCustom(sender, receiver, transferAmount);
       });
       await tx.prove();
       await tx.sign(signers).send().wait();
@@ -254,10 +231,6 @@ describe('Fungible Token - Transfer Tests', () => {
         await tokenContract.initialize(
           tokenAdmin,
           UInt8.from(9),
-          MintConfig.default,
-          mintParams,
-          BurnConfig.default,
-          burnParams,
           MintDynamicProofConfig.default,
           BurnDynamicProofConfig.default,
           TransferDynamicProofConfig.default,
@@ -272,21 +245,8 @@ describe('Fungible Token - Transfer Tests', () => {
       const mintAmount = UInt64.from(1000);
       const tx = await Mina.transaction({ sender: user1, fee }, async () => {
         AccountUpdate.fundNewAccount(user1, 3);
-        await tokenContract.mintWithProof(
-          user1,
-          mintAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
-
-        await tokenContract.mintWithProof(
-          user2,
-          mintAmount,
-          dummyProof,
-          dummyVkey,
-          vKeyMap
-        );
+        await tokenContract.mint(user1, mintAmount);
+        await tokenContract.mint(user2, mintAmount);
       });
       await tx.prove();
       await tx.sign([user1.key, tokenAdmin.key]).send().wait();
@@ -294,7 +254,7 @@ describe('Fungible Token - Transfer Tests', () => {
   });
 
   // SLV = Side-Loaded Verification
-  describe('Transfer Operations - Sideload Disabled', () => {
+  describe('Transfer Operations', () => {
     it('should do a transfer from user2 to user3', async () => {
       const transferAmount = UInt64.from(100);
       await testTransferTx(user2, user3, transferAmount, [user2.key]);
@@ -322,7 +282,8 @@ describe('Fungible Token - Transfer Tests', () => {
 
     it('should reject a transaction not signed by the token holder using sideload-disabled method', async () => {
       const transferAmount = UInt64.from(100);
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.INVALID_SIGNATURE_FEE_PAYER;
+      const expectedErrorMessage =
+        TEST_ERROR_MESSAGES.INVALID_SIGNATURE_FEE_PAYER;
       await testTransferSideloadDisabledTx(
         user1,
         user3,
@@ -332,7 +293,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers from account that\'s tracking circulation', async () => {
+    it("should prevent transfers from account that's tracking circulation", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -345,7 +306,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers from account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should prevent transfers from account that's tracking circulation using sideload-disabled method", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -358,7 +319,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers to account that\'s tracking circulation', async () => {
+    it("should prevent transfers to account that's tracking circulation", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -371,7 +332,7 @@ describe('Fungible Token - Transfer Tests', () => {
       );
     });
 
-    it('should prevent transfers to account that\'s tracking circulation using sideload-disabled method', async () => {
+    it("should prevent transfers to account that's tracking circulation using sideload-disabled method", async () => {
       const transferAmount = UInt64.from(100);
       const expectedErrorMessage =
         FungibleTokenErrors.noTransferFromCirculation;
@@ -406,7 +367,8 @@ describe('Fungible Token - Transfer Tests', () => {
           .send()
           .wait();
       } catch (error: unknown) {
-        const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+        const expectedErrorMessage =
+          TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
         expect((error as Error).message).toContain(expectedErrorMessage);
       }
     });
@@ -434,7 +396,8 @@ describe('Fungible Token - Transfer Tests', () => {
 
   describe('Side-loaded Verification Key Updates', () => {
     it('should reject updating sideloaded verification key hash: unauthorized by admin', async () => {
-      const expectedErrorMessage = TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
+      const expectedErrorMessage =
+        TEST_ERROR_MESSAGES.NO_AUTHORIZATION_PROVIDED;
       await updateSLVkeyHashTx(
         user1,
         programVkey,
@@ -666,6 +629,33 @@ describe('Fungible Token - Transfer Tests', () => {
         user2
       );
 
+      let burnDynamicProofConfig = BurnDynamicProofConfig.default;
+      burnDynamicProofConfig.shouldVerify = Bool(true);
+
+      const updateBurnDynamicProofConfigTx = await Mina.transaction(
+        { sender: user1, fee },
+        async () => {
+          await tokenContract.updateDynamicProofConfig(
+            OperationKeys.Burn,
+            burnDynamicProofConfig
+          );
+        }
+      );
+      await updateBurnDynamicProofConfigTx.prove();
+      await updateBurnDynamicProofConfigTx
+        .sign([user1.key, tokenAdmin.key])
+        .send()
+        .wait();
+
+      await updateSLVkeyHashTx(
+        user1,
+        programVkey,
+        vKeyMap,
+        OperationKeys.Burn,
+        [user1.key, tokenAdmin.key]
+      );
+      vKeyMap.set(OperationKeys.Burn, programVkey.hash);
+
       // user1 pays for tx fees to not get a "mina account balance mismatch" error
       // we burn tokens for user2 to change the custom token balance and test the precondition
       const burnTx = await Mina.transaction(
@@ -682,6 +672,22 @@ describe('Fungible Token - Transfer Tests', () => {
       );
       await burnTx.prove();
       await burnTx.sign([user1.key, user2.key]).send().wait();
+
+      burnDynamicProofConfig.shouldVerify = Bool(false);
+      const updateBurnDynamicProofConfigTx2 = await Mina.transaction(
+        { sender: user1, fee },
+        async () => {
+          await tokenContract.updateDynamicProofConfig(
+            OperationKeys.Burn,
+            burnDynamicProofConfig
+          );
+        }
+      );
+      await updateBurnDynamicProofConfigTx2.prove();
+      await updateBurnDynamicProofConfigTx2
+        .sign([user1.key, tokenAdmin.key])
+        .send()
+        .wait();
 
       const transferAmount = UInt64.from(150);
       const expectedErrorMessage =

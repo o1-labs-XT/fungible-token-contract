@@ -1,15 +1,11 @@
-import { AccountUpdate, Mina, PrivateKey, UInt8, UInt64, Bool } from 'o1js';
+import { AccountUpdate, Mina, PrivateKey, UInt8, UInt64 } from 'o1js';
 import { FungibleToken } from '../FungibleTokenContract.js';
 import {
-  MintConfig,
-  MintParams,
-  BurnConfig,
-  BurnParams,
   MintDynamicProofConfig,
   BurnDynamicProofConfig,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // Set up local blockchain
@@ -34,24 +30,6 @@ Contract Public Key: ${contractKeypair.publicKey.toBase58()}
 
 const token = new FungibleToken(contractKeypair.publicKey);
 
-// Configure mint and burn parameters
-const mintParams = MintParams.create(MintConfig.default, {
-  minAmount: UInt64.from(1),
-  maxAmount: UInt64.from(1000),
-});
-
-// Create a burn configuration that explicitly allows unauthorized burning
-const burnConfig = new BurnConfig({
-  unauthorized: Bool(true), // Allow burning without admin signature
-  fixedAmount: Bool(false),
-  rangedAmount: Bool(true),
-});
-
-const burnParams = BurnParams.create(burnConfig, {
-  minAmount: UInt64.from(100),
-  maxAmount: UInt64.from(1500),
-});
-
 console.log('Compiling contracts...');
 await FungibleToken.compile();
 
@@ -68,10 +46,6 @@ const deployTx = await Mina.transaction({ sender: deployer, fee }, async () => {
   await token.initialize(
     admin,
     UInt8.from(9),
-    MintConfig.default,
-    mintParams,
-    burnConfig,
-    burnParams,
     MintDynamicProofConfig.default,
     BurnDynamicProofConfig.default,
     TransferDynamicProofConfig.default,
@@ -99,7 +73,7 @@ const mintTx = await Mina.transaction(
   },
   async () => {
     AccountUpdate.fundNewAccount(owner, 1);
-    await token.mint(alexa, mintParams.maxAmount);
+    await token.mint(alexa, UInt64.from(1000));
   }
 );
 
@@ -127,7 +101,7 @@ const transferTx = await Mina.transaction(
   },
   async () => {
     AccountUpdate.fundNewAccount(alexa, 1);
-    await token.transferCustom(alexa, billy, mintParams.maxAmount);
+    await token.transferCustom(alexa, billy, UInt64.from(1000));
   }
 );
 
@@ -143,11 +117,11 @@ equal(alexaBalanceAfterTransfer, 0n);
 
 const billyBalanceAfterTransfer = (await token.getBalanceOf(billy)).toBigInt();
 console.log('Billy balance after transfer:', billyBalanceAfterTransfer);
-equal(billyBalanceAfterTransfer, mintParams.maxAmount.toBigInt());
+equal(billyBalanceAfterTransfer, 1000n);
 
 // Burn some of Billy's tokens
 console.log("Burning Billy's tokens...");
-const burnAmount = UInt64.from(150); // Use an amount within the burn range (100-1500)
+const burnAmount = UInt64.from(150);
 const burnTx = await Mina.transaction(
   {
     sender: billy,

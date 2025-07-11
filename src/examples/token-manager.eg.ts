@@ -1,4 +1,5 @@
 import {
+  Field,
   ZkProgram,
   Struct,
   Bool,
@@ -22,15 +23,11 @@ import {
 } from 'o1js';
 import { FungibleToken } from '../FungibleTokenContract.js';
 import {
-  BurnConfig,
   BurnDynamicProofConfig,
-  BurnParams,
-  MintConfig,
   MintDynamicProofConfig,
-  MintParams,
   TransferDynamicProofConfig,
   UpdatesDynamicProofConfig,
-} from '../configs.js';
+} from '../lib/configs.js';
 import { equal } from 'node:assert';
 
 // ECDSA curve setup
@@ -182,18 +179,6 @@ const deployTx = await Mina.transaction(
     await tokenContract.initialize(
       managerContractAddress,
       UInt8.from(9),
-      MintConfig.default,
-      new MintParams({
-        fixedAmount: UInt64.from(100),
-        minAmount: UInt64.from(20),
-        maxAmount: UInt64.MAXINT(),
-      }),
-      BurnConfig.default,
-      new BurnParams({
-        fixedAmount: UInt64.from(100),
-        minAmount: UInt64.from(20),
-        maxAmount: UInt64.MAXINT(),
-      }),
       MintDynamicProofConfig.default,
       BurnDynamicProofConfig.default,
       TransferDynamicProofConfig.default,
