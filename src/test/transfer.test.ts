@@ -31,7 +31,10 @@ import {
 } from '../examples/side-loaded/program.eg.js';
 import { TEST_ERROR_MESSAGES } from './constants.js';
 
-const proofsEnabled = false;
+const proofsEnabled = process.env.PROOFS_ENABLED === 'true';
+if (!proofsEnabled) {
+  console.log('Skipping proof generation in transfer tests.');
+}
 
 describe('Fungible Token - Transfer Tests', () => {
   let tokenAdmin: Mina.TestPublicKey, tokenA: Mina.TestPublicKey;
