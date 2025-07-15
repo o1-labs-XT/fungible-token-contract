@@ -26,3 +26,31 @@ jobs:
           npm test
         env:
           CI: true
+
+  examples:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20]
+    steps:
+      - name: Set up NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Build and run examples
+        run: |
+          npm ci
+          npm run build
+          echo "Running e2e example..."
+          node build/src/examples/e2e.eg.js
+          echo "Running escrow example..."
+          node build/src/examples/escrow.eg.js
+          echo "Running token-manager example..."
+          node build/src/examples/token-manager.eg.js
+          echo "Running side-loaded example..."
+          node build/src/examples/side-loaded/run.js
+        env:
+          CI: true
