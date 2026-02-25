@@ -16,8 +16,8 @@ import {
   UInt64,
   UInt8,
   VerificationKey,
-  Experimental,
   AccountUpdateTree,
+  IndexedMerkleMap
 } from 'o1js';
 import {
   MintDynamicProofConfig,
@@ -73,8 +73,6 @@ export {
 // =============================================================================
 // TYPES & INTERFACES
 // =============================================================================
-
-const { IndexedMerkleMap } = Experimental;
 
 /**
  * Merkle map for storing side-loaded verification key hashes.
