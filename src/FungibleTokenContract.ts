@@ -16,7 +16,6 @@ import {
   UInt64,
   UInt8,
   VerificationKey,
-  Experimental,
   AccountUpdateTree,
   IndexedMerkleMap
 } from 'o1js';
